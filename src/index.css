@@ -109,6 +109,22 @@ input[type="number"] {
 	--sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 @theme inline {
+  --color-nord-dark-100: #2e3440;
+	--color-nord-dark-200: #3b4252;
+	--color-nord-dark-300: #434c5e;
+	--color-nord-dark-400: #4c566a;
+	--color-nord-light-100: #d8dee9;
+	--color-nord-light-200: #e5e9f0;
+	--color-nord-light-300: #eceff4;
+	--color-nord-frost-100: #8fbcbb;
+	--color-nord-frost-200: #88c0d0;
+	--color-nord-frost-300: #81a1c1;
+	--color-nord-frost-400: #5e81ac;
+	--color-nord-aurora-red: #bf616a;
+	--color-nord-aurora-orange: #d08770;
+	--color-nord-aurora-yellow: #ebcb8b;
+	--color-nord-aurora-green: #a3be8c;
+	--color-nord-aurora-blue: #81a1c1;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
