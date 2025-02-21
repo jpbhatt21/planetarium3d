@@ -324,6 +324,10 @@ export const animationKeyAtom = atom(-1);
 export const gravitationalConstantAtom = atom(6.6743e-5);
 export const timeStepAtom = atom(10);
 export const elasticitiyAtom = atom(0.8);
+export const bodyRefAtom = atom({current:[]} as React.MutableRefObject<any>);
+export const trailRefAtom = atom({current:[]} as React.MutableRefObject<any>);
+export const forecastRefAtom = atom({current:[]} as React.MutableRefObject<any>);
+export const colorChangerAtom = atom("#-1");
 
 //Functions
 export function makeDefaultBody(props: object = {}): Body {

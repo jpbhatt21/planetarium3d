@@ -106,12 +106,9 @@ export function distanceBetween(
 export function resolveSimultaneousCollisions(
 	bodies: Body[],
 	iterations: number,e:number
-) {	let save = JSON.parse(JSON.stringify(bodies));
-	bodies.forEach((body) => {
-		if (body.static) 
-			body.velocity = [0, 0, 0];
-	}
-	);
+) {	
+	let save =JSON.parse(JSON.stringify(bodies));
+	
 	// We use a fixed number of iterations to approximate simultaneous resolution.
 	for (let iter = 0; iter < iterations; iter++) {
 		// Detect all collision contacts for this time step.
@@ -149,16 +146,38 @@ export function resolveSimultaneousCollisions(
 				nHat,
 				contact.penetration / invMassSum
 			);
-			A.position = vec3.add(
-				A.position,
-				vec3.multiply(correction, 1 / A.mass)
-			);
-			B.position = vec3.subtract(
-				B.position,
-				vec3.multiply(correction, 1 / B.mass)
-			);
+			if(!A.static && !B.static){
+				A.position = vec3.add(
+					A.position,
+					vec3.multiply(correction, 1 / A.mass)
+				);
+				B.position = vec3.subtract(
+					B.position,
+					vec3.multiply(correction, 1 / B.mass)
+				);
+			}
+			else if(A.static && !B.static)
+			{
+				B.position = vec3.subtract(
+					B.position,
+					vec3.multiply(correction, 1 / B.mass+1/A.mass)
+				);
+			}
+			else if(!A.static && B.static)
+			{
+				A.position = vec3.add(
+					A.position,
+					vec3.multiply(correction, 1 / A.mass+1/B.mass)
+				);
+			}
+			else
+				continue;
 
 			// Relative velocity along normal.
+			if(A.static)
+				A.velocity=[0,0,0];
+			if(B.static)
+				B.velocity=[0,0,0];
 			let relVel = vec3.subtract(A.velocity, B.velocity);
 			let relVelAlongNormal = vec3.dot(relVel, nHat);
 
@@ -170,6 +189,9 @@ export function resolveSimultaneousCollisions(
 
 			// Update velocities.
 			let impulse = vec3.multiply(nHat, jImpulse);
+			
+			if(!A.static && !B.static){
+				
 			A.velocity = vec3.add(
 				A.velocity,
 				vec3.multiply(impulse, 1 / A.mass)
@@ -178,6 +200,24 @@ export function resolveSimultaneousCollisions(
 				B.velocity,
 				vec3.multiply(impulse, 1 / B.mass)
 			);
+			}
+			else if(A.static && !B.static)
+			{
+				B.velocity = vec3.subtract(
+					B.velocity,
+					vec3.multiply(impulse, 1 / B.mass+1/A.mass)
+				);
+			}
+			else if(!A.static && B.static)
+			{
+				A.velocity = vec3.add(
+					A.velocity,
+					vec3.multiply(impulse, 1 / A.mass+1/B.mass)
+				);
+			}
+			else
+				continue;
+
 			let m1 = A.mass;
 			let m2 = B.mass;
             let mul=1
@@ -215,7 +255,9 @@ export function resolveSimultaneousCollisions(
 	}
 	return save.map((body:Body, index:number) => {
 		if(body.static)
+		{	
 			return body;
+		}
 		return bodies[index];
 	});
 }

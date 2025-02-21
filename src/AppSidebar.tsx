@@ -27,6 +27,7 @@ import {
 import { useAtom } from "jotai";
 import {
 	bodiesAtom,
+	colorChangerAtom,
 	elasticitiyAtom,
 	focusAtom,
 	forecastLimitAtom,
@@ -50,6 +51,7 @@ function AppSidebar({ open }: { open: boolean }) {
 	const [E, setE] = useAtom(elasticitiyAtom);
 	const [forecastLimit, setForecastLimit] = useAtom(forecastLimitAtom);
 	const [trailLimit, setTrailLimit] = useAtom(trailLimitAtom);
+	const [_, setColorChange] = useAtom(colorChangerAtom);
 	const [gRef, dtRef, eRef, foreRef, trailRef] = [
 		useRef<HTMLInputElement>(null),
 		useRef<HTMLInputElement>(null),
@@ -430,7 +432,7 @@ function AppSidebar({ open }: { open: boolean }) {
 												<Input
 													type="number"
 													className="text-end"
-													defaultValue={body.mass}
+													value={body.mass}
 													onChange={(e) => {
 														setBodies((prev) => {
 															let temp = [
@@ -452,7 +454,7 @@ function AppSidebar({ open }: { open: boolean }) {
 												<Input
 													type="number"
 													className="text-end"
-													defaultValue={body.radius}
+													value={body.radius}
 													onChange={(e) => {
 														setBodies((prev) => {
 															let temp = [
@@ -487,7 +489,7 @@ function AppSidebar({ open }: { open: boolean }) {
 														<Input
 															type="number"
 															className="text-end"
-															defaultValue={
+															value={
 																body.position[0]
 															}
                                                             step={body.radius/10}
@@ -515,7 +517,7 @@ function AppSidebar({ open }: { open: boolean }) {
 														<Input
 															type="number"
 															className="text-end"
-															defaultValue={
+															value={
 																body.position[1]
 															}
                                                             step={body.radius/10}
@@ -544,7 +546,7 @@ function AppSidebar({ open }: { open: boolean }) {
 														<Input
 															type="number"
 															className="text-end"
-															defaultValue={
+															value={
 																body.position[2]
 															}
                                                             step={body.radius/10}
@@ -591,7 +593,7 @@ function AppSidebar({ open }: { open: boolean }) {
 														<Input
 															type="number"
 															className="text-end"
-															defaultValue={
+															value={
 																body.velocity[0]
 															}
                                                             step={0.1}
@@ -620,7 +622,7 @@ function AppSidebar({ open }: { open: boolean }) {
 														<Input
 															type="number"
 															className="text-end"
-															defaultValue={
+															value={
 																body.velocity[1]
 															}
                                                             step={0.1}
@@ -650,7 +652,7 @@ function AppSidebar({ open }: { open: boolean }) {
 															type="number"
 															className="text-end"
                                                             step={0.1}
-															defaultValue={
+															value={
 																body.velocity[2]
 															}
 															onChange={(e) => {
@@ -698,56 +700,69 @@ function AppSidebar({ open }: { open: boolean }) {
                                                         temp[index].fixedColor=e
                                                         return temp
                                                     })
+													
+													setColorChange(e?"#1":"#2")
                                                 }}/>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
                                                 <label>Color</label>
-                                                <Input type="color" className="w-[7rem]" value={body.color} onChange={(e)=>{
+                                                <Input type="color" className="w-[7rem]" value={body.color} onFocus={()=>setColorChange("#0")} onChange={(e)=>{
                                                     setBodies((prev)=>{
                                                         let temp=[...prev]
                                                         temp[index].color=e.target.value
                                                         return temp
                                                     })
+													setColorChange(e.target.value)
+													
+													
+													
                                                 }}/>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
                                                 <label>Trail</label>
-                                                <Checkbox checked={body.trail} onCheckedChange={(e:boolean)=>{
+                                                <Checkbox checked={body.trail}  onCheckedChange={(e:boolean)=>{
                                                     setBodies((prev)=>{
                                                         let temp=[...prev]
                                                         temp[index].trail=e
                                                         return temp
                                                     })
+													setColorChange(e?"#3":"#4")
                                                 }}/>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
                                                 <label>Trail Color</label>
-                                                <Input type="color" className="w-[7rem]" value={body.trailColor} onChange={(e)=>{
+                                                <Input type="color" className="w-[7rem]" value={body.trailColor} onFocus={()=>setColorChange("#0")} onChange={(e)=>{
                                                     setBodies((prev)=>{
                                                         let temp=[...prev]
                                                         temp[index].trailColor=e.target.value
                                                         return temp
                                                     })
+													setColorChange(e.target.value)
+
                                                 }}/>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
                                                 <label>Forecast</label>
-                                                <Checkbox checked={body.forecast} onCheckedChange={(e:boolean)=>{
+                                                <Checkbox checked={body.forecast}  onCheckedChange={(e:boolean)=>{
                                                     setBodies((prev)=>{
                                                         let temp=[...prev]
                                                         temp[index].forecast=e
                                                         return temp
                                                     })
+													setColorChange(e?"#5":"#6")
+
                                                 }}/>
                                             </SidebarMenuSubItem>
                                             <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
                                                 <label>Forecast Color</label>
-                                                <Input type="color" className="w-[7rem]" value={body.forecastColor} onChange={(e)=>{
+                                                <Input type="color" className="w-[7rem]" value={body.forecastColor} onFocus={()=>setColorChange("#0")} onChange={(e)=>{
                                                     setBodies((prev)=>{
                                                         let temp=[...prev]
                                                         temp[index].forecastColor=e.target.value
                                                         return temp
                                                     })
+													setColorChange(e.target.value)
+
                                                 }}/>
                                             </SidebarMenuSubItem>
                                                 
