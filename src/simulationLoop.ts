@@ -10,6 +10,7 @@ import {
 	gravitationalConstantAtom,
 	store,
 	timeStepAtom,
+	trailLimitAtom,
 	trailRefAtom,
 } from "./atoms";
 import {
@@ -22,12 +23,14 @@ let bodies = [] as Body[];
 let trails = [] as Vector3Tuple[][];
 let forecast = [] as Body[][];
 let forecastPosition = [] as Vector3Tuple[][];
+let trailLimit= 10000
 let G = 0;
 let dt = 10;
 let e = 1;
 let playing = false;
 export function init(colorChange: boolean = false) {
 	let prevPlaying = !!playing;
+	trailLimit= store.get(trailLimitAtom);
 	playing = false;
 	bodies = store.get(bodiesAtom);
 	G = store.get(gravitationalConstantAtom);
@@ -119,7 +122,7 @@ export function getNextState(): Body[] {
 					body.position
 				) > 0.1
 			) {
-				if (trails[index].length > 10000) {
+				while (trails[index].length > trailLimit) {
 					trails[index].shift();
 				}
 				return [...trails[index], body.position];

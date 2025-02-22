@@ -7,3 +7,27 @@
     to   { opacity: 1; }
 }
 
+.fadeout{
+    animation: fadeout 2s
+}
+
+.fadeout2{
+    animation: fadeout 1.5s
+}
+@keyframes fadeout {
+    0%,70% { opacity: 1;  pointer-events: all;}
+    100%   { opacity: 0; pointer-events: none; }
+}
+
+.followPath{
+    animation: followPath 10s;
+    offset-path: path('M10 80 Q 52.5 10, 95 80 T 180 80');
+}
+@keyframes followPath {
+    from {
+        offset-distance: 0%;
+     }
+    to   { 
+        offset-distance: 100%;
+    }
+}

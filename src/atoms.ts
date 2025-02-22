@@ -2,7 +2,6 @@ import { atom, createStore } from "jotai";
 import { theme } from "./theme";
 import { Vector3Tuple } from "three";
 import { init } from "./simulationLoop";
-
 //Interfaces
 export interface Body {
 	name: string;
@@ -328,6 +327,9 @@ export const bodyRefAtom = atom({current:[]} as React.MutableRefObject<any>);
 export const trailRefAtom = atom({current:[]} as React.MutableRefObject<any>);
 export const forecastRefAtom = atom({current:[]} as React.MutableRefObject<any>);
 export const colorChangerAtom = atom("#-1");
+export const bgLoadedAtom = atom(false);
+export const bgAtom= atom("q")
+export const bgQual= atom("2")
 
 //Functions
 export function makeDefaultBody(props: object = {}): Body {

@@ -26,6 +26,8 @@ import {
 } from "./components/ui/collapsible";
 import { useAtom } from "jotai";
 import {
+	bgAtom,
+	bgQual,
 	bodiesAtom,
 	colorChangerAtom,
 	elasticitiyAtom,
@@ -41,6 +43,29 @@ const spaces = ["Universal Settings", "Bodies", "Presets"];
 const separator = (
 	<div className="border-t border-primary-foreground w-9/10 self-center mt-1 fadein"></div>
 );
+const bgNames=[{
+	name:"Space",
+	code:"q"
+},
+{
+	name:"Nebula",
+	code:"s"
+}
+]
+const quality=[
+	{
+		level:"Low",
+		code:"1"
+	},
+	{
+		level:"Medium",
+		code:"2"
+	},
+	{
+		level:"High",
+		code:"3"
+	}
+]
 function AppSidebar({ open }: { open: boolean }) {
 	const [space, setSpace] = useState(0);
 	const [anchor, setAnchor] = useAtom(focusAtom);
@@ -52,6 +77,8 @@ function AppSidebar({ open }: { open: boolean }) {
 	const [forecastLimit, setForecastLimit] = useAtom(forecastLimitAtom);
 	const [trailLimit, setTrailLimit] = useAtom(trailLimitAtom);
 	const [_, setColorChange] = useAtom(colorChangerAtom);
+	const [bg,setBG] = useAtom(bgAtom)
+	const [bgQ, setBGQ] = useAtom(bgQual)
 	const [gRef, dtRef, eRef, foreRef, trailRef] = [
 		useRef<HTMLInputElement>(null),
 		useRef<HTMLInputElement>(null),
@@ -341,6 +368,78 @@ function AppSidebar({ open }: { open: boolean }) {
 																: "transparent",
 													}}>
 													{p.name}
+												</SidebarMenuSubButton>
+											);
+										})}
+									</SidebarMenuSub>
+								</CollapsibleContent>
+							</SidebarMenuItem>
+						</Collapsible>
+						<Collapsible className="mt-1 mb-2" defaultOpen={true}>
+							<SidebarMenuItem className="flex flex-col">
+								<CollapsibleTrigger className="w-full flex justify-between pr-3 items-center text-start">
+									Background{" "}
+									<label>
+										{bgNames.map((x)=>{
+											return x.code==bg?x.name:""
+										})}
+									</label>
+								</CollapsibleTrigger>
+								<CollapsibleContent>
+									<SidebarMenuSub className="py-1 gap-1">
+										{bgNames.map((p, i) => {
+											return (
+												<SidebarMenuSubButton
+													key={i}
+													className="cursor-pointer border"
+													onClick={() => {
+														setBG(
+															p.code
+														)
+													}}
+													style={{
+														borderColor:
+															p.code==bg
+																? "#fff1"
+																: "transparent",
+													}}>
+													{p.name}
+												</SidebarMenuSubButton>
+											);
+										})}
+									</SidebarMenuSub>
+								</CollapsibleContent>
+							</SidebarMenuItem>
+						</Collapsible>
+						<Collapsible className="mt-1 mb-2" defaultOpen={true}>
+							<SidebarMenuItem className="flex flex-col">
+								<CollapsibleTrigger className="w-full flex justify-between pr-3 items-center text-start">
+									Background{" "}
+									<label>
+										{quality.map((x)=>{
+											return x.code==bgQ?x.level:""
+										})}
+									</label>
+								</CollapsibleTrigger>
+								<CollapsibleContent>
+									<SidebarMenuSub className="py-1 gap-1">
+										{quality.map((p, i) => {
+											return (
+												<SidebarMenuSubButton
+													key={i}
+													className="cursor-pointer border"
+													onClick={() => {
+														setBGQ(
+															p.code
+														)
+													}}
+													style={{
+														borderColor:
+															p.code==bgQ
+																? "#fff1"
+																: "transparent",
+													}}>
+													{p.level}
 												</SidebarMenuSubButton>
 											);
 										})}
