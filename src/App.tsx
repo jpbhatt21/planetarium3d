@@ -48,7 +48,7 @@ function App() {
 						}}>
 						<SidebarTrigger id="sidebarTrig" className=" " />
 					</div>
-					<div className="fixed w-full flex flex-col pointer-events-none duration-700 transition-opacity  ease-linear gap-2 fadeout items-center justify-center h-full z-10 bg-background"
+					<div className="fixed w-full flex flex-col pointer-events-none duration-700 transition-opacity  ease-linear gap-2 items-center justify-center h-full z-10 bg-background"
           style={{
             opacity: loaded?0:1,
             pointerEvents: loaded?"none":"all"
@@ -67,7 +67,7 @@ function App() {
 							</label>
 							{/* <label className=" tracking-wider"> Playground</label> */}
 						</div>
-              <div className="flex items-center gap-1 text-muted-foreground fadeout2  justify-center w-64">
+              <div className="flex items-center gap-1 text-muted-foreground  justify-center w-64">
                 <div className="w-full border"></div>
                 <label className="min-w-fit mts">Loading Assets</label>
                 <div className="w-full border"></div>
