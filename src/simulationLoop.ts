@@ -15,8 +15,7 @@ import {
 } from "./atoms";
 import {
 	distanceBetween,
-	resolveSimultaneousCollisions,
-	simulateGravity,
+	getNextBodyState,
 } from "./helper";
 import * as THREE from "three";
 let bodies = [] as Body[];
@@ -28,7 +27,7 @@ let G = 0;
 let dt = 10;
 let e = 1;
 let playing = false;
-export function init(colorChange: boolean = false) {
+export function init(colorChange: boolean = false,force:boolean=false) {
 	let prevPlaying = !!playing;
 	trailLimit= store.get(trailLimitAtom);
 	playing = false;
@@ -46,10 +45,10 @@ export function init(colorChange: boolean = false) {
 
 		let forecastLimit = store.get(forecastLimitAtom);
 		for (let i = 0; i < forecastLimit; i++) {
-			tempBodies = simulateGravity(
-				resolveSimultaneousCollisions(tempBodies, 10, e),
+			tempBodies = getNextBodyState(
+				tempBodies,
 				G,
-				dt
+				dt,e
 			);
 			temp.forEach((body, index) => {
 				body.push(tempBodies[index]);
@@ -65,6 +64,7 @@ export function init(colorChange: boolean = false) {
 	}
 
 	initFuturePos();
+	if(!force)
 	playing = prevPlaying;
 }
 async function initFuturePos() {
@@ -82,7 +82,7 @@ async function initFuturePos() {
 		]);
 	});
 }
-function sleep(ms: number) {
+export function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 async function setNextState() {
@@ -94,10 +94,10 @@ async function setNextState() {
 	});
 	let waitTime = 10;
 	while (playing) {
-		latest = simulateGravity(
-			resolveSimultaneousCollisions(latest, 10, e),
+		latest = getNextBodyState(
+			latest,
 			G,
-			dt
+			dt,e
 		);
 		latest.forEach((body, index) => {
 			forecast[index].push(body);
@@ -151,10 +151,23 @@ export function playSimulation() {
 	const bodyRefs = store.get(bodyRefAtom);
 	const trailRefs = store.get(trailRefAtom);
 	const forecastRefs = store.get(forecastRefAtom);
+	let initialRadii = bodies.map((body) => body.radius);
+	
 	function updateState() {
 		getNextState().map((body, index) => {
 			if (bodyRefs.current[index]) {
 				bodyRefs.current[index].position.set(...body.position);
+				if(body.radius!=initialRadii[index]){
+					// bodyRefs.current[index].geometry.dispose();
+					// bodyRefs.current[index].geometry = new THREE.SphereGeometry(
+					// 	body.radius,
+					// 	32,
+					// 	32
+					// );
+					// initialRadii[index]=body.radius
+					
+					bodyRefs.current[index].scale.set(body.radius,body.radius,body.radius)
+				}
 			}
 
 			if (trailRefs.current[index]) {
@@ -166,13 +179,20 @@ export function playSimulation() {
 					]);
 			}
 
-			if (forecastRefs.current[index]) {
+			if (forecastRefs.current[index] && !(body.static||(body.mass==0&&body.radius==0))) {
 				forecastRefs.current[index].geometry.dispose();
 				forecastRefs.current[index].geometry =
 					new THREE.BufferGeometry().setFromPoints([
 						...forecastPosition[index].map(
 							(x) => new Vector3(...x)
 						),
+					]);
+			}
+			else if(forecastRefs.current[index]){
+				forecastRefs.current[index].geometry.dispose();
+				forecastRefs.current[index].geometry =
+					new THREE.BufferGeometry().setFromPoints([
+						new Vector3(0,0,0)
 					]);
 			}
 		});

@@ -33,13 +33,13 @@ export const vec3 = {
 	magnitude,
 	normalize,
 };
-export function simulateGravity(bodies: Body[],G:number,dt:number): Body[] {
+export function simulateGravity(bodies: Body[], G: number, dt: number): Body[] {
 	let accelerations: Vector3Tuple[] = Array.from(
 		{ length: bodies.length },
 		() => [0, 0, 0]
 	);
 	const newBodies: Body[] = bodies.map((body, index) => {
-		if ( body.mass > 0) {
+		if (body.mass > 0) {
 			for (
 				let otherIndex = index + 1;
 				otherIndex < bodies.length;
@@ -62,21 +62,21 @@ export function simulateGravity(bodies: Body[],G:number,dt:number): Body[] {
 							(otherBody.position[2] - body.position[2]) /
 								distance,
 						];
-						if(!body.static)
-						{accelerations[index] = vec3.add(
-							accelerations[index],
-							vec3.multiply(direction, force / body.mass)
-						);}
-						if(!otherBody.static)
-						accelerations[otherIndex] = vec3.subtract(
-							accelerations[otherIndex],
-							vec3.multiply(direction, force / otherBody.mass)
-						);
+						if (!body.static) {
+							accelerations[index] = vec3.add(
+								accelerations[index],
+								vec3.multiply(direction, force / body.mass)
+							);
+						}
+						if (!otherBody.static)
+							accelerations[otherIndex] = vec3.subtract(
+								accelerations[otherIndex],
+								vec3.multiply(direction, force / otherBody.mass)
+							);
 					}
 				}
 			}
-			if(body.static)
-				return body;
+			if (body.static) return body;
 			return {
 				...body,
 				velocity: [
@@ -105,10 +105,11 @@ export function distanceBetween(
 }
 export function resolveSimultaneousCollisions(
 	bodies: Body[],
-	iterations: number,e:number
-) {	
-	let save =JSON.parse(JSON.stringify(bodies));
-	
+	iterations: number,
+	e: number
+) {
+	let save = JSON.parse(JSON.stringify(bodies));
+
 	// We use a fixed number of iterations to approximate simultaneous resolution.
 	for (let iter = 0; iter < iterations; iter++) {
 		// Detect all collision contacts for this time step.
@@ -146,7 +147,7 @@ export function resolveSimultaneousCollisions(
 				nHat,
 				contact.penetration / invMassSum
 			);
-			if(!A.static && !B.static){
+			if (!A.static && !B.static) {
 				A.position = vec3.add(
 					A.position,
 					vec3.multiply(correction, 1 / A.mass)
@@ -155,29 +156,21 @@ export function resolveSimultaneousCollisions(
 					B.position,
 					vec3.multiply(correction, 1 / B.mass)
 				);
-			}
-			else if(A.static && !B.static)
-			{
+			} else if (A.static && !B.static) {
 				B.position = vec3.subtract(
 					B.position,
-					vec3.multiply(correction, 1 / B.mass+1/A.mass)
+					vec3.multiply(correction, 1 / B.mass + 1 / A.mass)
 				);
-			}
-			else if(!A.static && B.static)
-			{
+			} else if (!A.static && B.static) {
 				A.position = vec3.add(
 					A.position,
-					vec3.multiply(correction, 1 / A.mass+1/B.mass)
+					vec3.multiply(correction, 1 / A.mass + 1 / B.mass)
 				);
-			}
-			else
-				continue;
+			} else continue;
 
 			// Relative velocity along normal.
-			if(A.static)
-				A.velocity=[0,0,0];
-			if(B.static)
-				B.velocity=[0,0,0];
+			if (A.static) A.velocity = [0, 0, 0];
+			if (B.static) B.velocity = [0, 0, 0];
 			let relVel = vec3.subtract(A.velocity, B.velocity);
 			let relVelAlongNormal = vec3.dot(relVel, nHat);
 
@@ -189,63 +182,56 @@ export function resolveSimultaneousCollisions(
 
 			// Update velocities.
 			let impulse = vec3.multiply(nHat, jImpulse);
-			
-			if(!A.static && !B.static){
-				
-			A.velocity = vec3.add(
-				A.velocity,
-				vec3.multiply(impulse, 1 / A.mass)
-			);
-			B.velocity = vec3.subtract(
-				B.velocity,
-				vec3.multiply(impulse, 1 / B.mass)
-			);
-			}
-			else if(A.static && !B.static)
-			{
-				B.velocity = vec3.subtract(
-					B.velocity,
-					vec3.multiply(impulse, 1 / B.mass+1/A.mass)
-				);
-			}
-			else if(!A.static && B.static)
-			{
+
+			if (!A.static && !B.static) {
 				A.velocity = vec3.add(
 					A.velocity,
-					vec3.multiply(impulse, 1 / A.mass+1/B.mass)
+					vec3.multiply(impulse, 1 / A.mass)
 				);
-			}
-			else
-				continue;
+				B.velocity = vec3.subtract(
+					B.velocity,
+					vec3.multiply(impulse, 1 / B.mass)
+				);
+			} else if (A.static && !B.static) {
+				B.velocity = vec3.subtract(
+					B.velocity,
+					vec3.multiply(impulse, 1 / B.mass + 1 / A.mass)
+				);
+			} else if (!A.static && B.static) {
+				A.velocity = vec3.add(
+					A.velocity,
+					vec3.multiply(impulse, 1 / A.mass + 1 / B.mass)
+				);
+			} else continue;
 
 			let m1 = A.mass;
 			let m2 = B.mass;
-            let mul=1
+			let mul = 1;
 			if (m1 > m2) {
 				A.mass = m1 + m2 * (1 - e);
 				B.mass = m2 * e;
-                if(B.mass<0.1||B.radius<0.1)
-                {   A.mass+=B.mass;
-                    B.mass=0;
-                    mul=0;
-                }
+				if (B.mass < 0.1 || B.radius < 0.1) {
+					A.mass += B.mass;
+					B.mass = 0;
+					mul = 0;
+				}
 				let aVolume = Math.pow(A.radius, 3);
 				let bVolume = Math.pow(B.radius, 3);
-				A.radius = Math.cbrt(aVolume + bVolume * (1 - e*mul));
-				B.radius = Math.cbrt(bVolume * e*mul);;
+				A.radius = Math.cbrt(aVolume + bVolume * (1 - e * mul));
+				B.radius = Math.cbrt(bVolume * e * mul);
 			} else {
 				B.mass = m2 + m1 * (1 - e);
 				A.mass = m1 * e;
 
-                if(A.mass<0.1||A.radius<0.1)
-                {   B.mass+=A.mass;
-                    A.mass=0;
-                    mul=0;
-                }
+				if (A.mass < 0.1 || A.radius < 0.1) {
+					B.mass += A.mass;
+					A.mass = 0;
+					mul = 0;
+				}
 				let aVolume = Math.pow(A.radius, 3);
 				let bVolume = Math.pow(B.radius, 3);
-				B.radius = Math.cbrt(bVolume + aVolume * (1 - e*mul));
-				A.radius = Math.cbrt(aVolume * e*mul);
+				B.radius = Math.cbrt(bVolume + aVolume * (1 - e * mul));
+				A.radius = Math.cbrt(aVolume * e * mul);
 			}
 		}
 		if (merged) {
@@ -253,11 +239,174 @@ export function resolveSimultaneousCollisions(
 			continue;
 		}
 	}
-	return save.map((body:Body, index:number) => {
-		if(body.static)
-		{	
+	return save.map((body: Body, index: number) => {
+		if (body.static) {
 			return body;
 		}
 		return bodies[index];
+	});
+}
+export function newtonianGravity(A: Body, B: Body, G: number): Vector3Tuple {
+	const dx = B.position[0] - A.position[0];
+	const dy = B.position[1] - A.position[1];
+	const dz = B.position[2] - A.position[2];
+
+	const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
+	const force = (G * A.mass * B.mass) / (r * r);
+
+	// Normalize and multiply by force
+	return [(dx / r) * force, (dy / r) * force, (dz / r) * force];
+}
+interface CollisionResultBody {
+	deltaV: Vector3Tuple;
+	deltaR: number;
+	deltaM: number;
+	deltaP: Vector3Tuple;
+}
+interface CollisionResult {
+	A: CollisionResultBody;
+	B: CollisionResultBody;
+}
+const init = {
+	A: {
+		deltaV: [0, 0, 0] as Vector3Tuple,
+		deltaR: 0,
+		deltaM: 0,
+		deltaP: [0, 0, 0] as Vector3Tuple,
+	},
+	B: {
+		deltaV: [0, 0, 0] as Vector3Tuple,
+		deltaR: 0,
+		deltaM: 0,
+		deltaP: [0, 0, 0] as Vector3Tuple,
+	},
+};
+function calculateCollisionForce(A: Body, B: Body, e: number): CollisionResult {
+	let n = vec3.subtract(A.position, B.position);
+	let dist = vec3.magnitude(n);
+	let nHat = vec3.normalize(n);
+	let penetration = A.radius + B.radius - dist;
+	let invMassSum = 1 / A.mass + 1 / B.mass;
+	if (penetration > 0) {
+		let changes = JSON.parse(JSON.stringify(init));
+		let correction = vec3.multiply(nHat, penetration / invMassSum);
+		let aVel = A.static ? ([0, 0, 0] as Vector3Tuple) : A.velocity;
+		let bVel = B.static ? ([0, 0, 0] as Vector3Tuple) : B.velocity;
+		let relVel = vec3.subtract(aVel, bVel);
+		let relVelAlongNormal = vec3.dot(relVel, nHat);
+		if (relVelAlongNormal > 0) return JSON.parse(JSON.stringify(init));
+		let jImpulse = (-(1 + e) * relVelAlongNormal) / invMassSum;
+		let impulse = vec3.multiply(nHat, jImpulse);
+		if (!A.static && !B.static) {
+			changes.A.deltaP = vec3.multiply(correction, 1 / A.mass);
+			changes.B.deltaP = vec3.multiply(correction, 1 / B.mass);
+			changes.A.deltaV = vec3.multiply(impulse, 1 / A.mass);
+			changes.B.deltaV = vec3.multiply(impulse, 1 / B.mass);
+		} else if (A.static && !B.static) {
+			changes.B.deltaP = vec3.add(
+				vec3.multiply(correction, 1 / B.mass),
+				vec3.multiply(correction, 1 / A.mass)
+			);
+			changes.B.deltaV = vec3.multiply(impulse, invMassSum);
+		} else if (!A.static && B.static) {
+			changes.A.deltaP = vec3.add(
+				vec3.multiply(correction, 1 / B.mass),
+				vec3.multiply(correction, 1 / A.mass)
+			);
+			changes.A.deltaV = vec3.multiply(impulse, invMassSum);
+		}
+
+		if (A.mass > B.mass) {
+			changes.A.deltaM = B.mass * (1 - e);
+			changes.B.deltaM = B.mass * (1 - e)
+			let aVolume = Math.pow(A.radius, 3);
+			let bVolume = Math.pow(B.radius, 3);
+			changes.A.deltaR=Math.cbrt(aVolume + bVolume * (1 - e))-A.radius ;
+			changes.B.deltaR=B.radius - Math.cbrt(bVolume * e );
+			if(B.mass-changes.B.deltaM<0.001||B.radius-changes.B.deltaR<0.001){
+				changes.A.deltaM=B.mass;
+				changes.B.deltaM=B.mass;
+				changes.A.deltaR=Math.cbrt(aVolume + bVolume)-A.radius
+				changes.B.deltaR=B.radius
+				
+			}
+		} else {
+			changes.B.deltaM =-A.mass * (1 - e);
+			changes.A.deltaM =-A.mass * (1 - e);
+			let aVolume = Math.pow(A.radius, 3);
+			let bVolume = Math.pow(B.radius, 3);
+			changes.B.deltaR=-Math.cbrt(bVolume + aVolume * (1 - e))+B.radius ;
+			changes.A.deltaR=-A.radius + Math.cbrt(aVolume * e );
+			if(A.mass-changes.A.deltaM<0.001||A.radius+changes.A.deltaR<0.001){
+				changes.B.deltaM=-A.mass;
+				changes.A.deltaM=-A.mass;
+				changes.B.deltaR=-Math.cbrt(bVolume + aVolume)+B.radius
+				changes.A.deltaR=-A.radius
+			}
+		}
+		return changes;
+	} else return JSON.parse(JSON.stringify(init));
+}
+export function getNextBodyState(
+	bodies: Body[],
+	G: number,
+	dt: number,
+	e: number
+): Body[] {
+	let forces: Vector3Tuple[] = bodies.map(() => [0, 0, 0]);
+	for (let i = 0; i < bodies.length; i++) {
+		let A = bodies[i];
+		if (A.mass == 0) continue;
+		for (let j = i + 1; j < bodies.length; j++) {
+			let B = bodies[j];
+			if (B.mass == 0 || (A.static && B.static)) continue;
+			let force = newtonianGravity(A, B, G);
+			if (!A.static) forces[i] = vec3.add(forces[i], force);
+			if (!B.static) forces[j] = vec3.subtract(forces[j], force);
+		}
+	}
+	bodies = bodies.map((body, index) => {
+		if (body.static) return body;
+		let force = forces[index];
+		let acceleration = vec3.multiply(force, 1 / body.mass);
+		let velocity = vec3.add(body.velocity, vec3.multiply(acceleration, dt));
+		let position = vec3.add(body.position, vec3.multiply(velocity, dt));
+		return { ...body, velocity, position };
+	});
+	let changes = bodies.map(() => JSON.parse(JSON.stringify(init.A)));
+	for (let i = 0; i < bodies.length; i++) {
+		let A = bodies[i];
+		if (A.radius == 0) continue;
+		for (let j = i + 1; j < bodies.length; j++) {
+			let B = bodies[j];
+			if (B.radius == 0 || (A.static && B.static)) continue;
+			let changePair = calculateCollisionForce(A, B, e);
+			changes[i] = {
+				deltaV: vec3.add(changes[i].deltaV, changePair.A.deltaV),
+				deltaR: changes[i].deltaR+changePair.A.deltaR,
+				deltaM: changes[i].deltaM+changePair.A.deltaM,
+				deltaP: vec3.add(changes[i].deltaP, changePair.A.deltaP),
+			};
+			changes[j] = {
+				deltaV: vec3.subtract(changes[j].deltaV, changePair.B.deltaV),
+				deltaR: changes[j].deltaR-changePair.B.deltaR,
+				deltaM: changes[j].deltaM-changePair.B.deltaM,
+				deltaP: vec3.subtract(changes[j].deltaP, changePair.B.deltaP),
+			};
+		}
+	}
+	
+
+	return bodies.map((body, index) => {
+		let change = changes[index];
+		let velocity = vec3.add(body.velocity, change.deltaV);
+		let position = vec3.add(body.position, change.deltaP);
+		let mass = body.mass + change.deltaM;
+		let sttic =body.static
+		if(mass==0){
+			sttic=true
+		}
+		let radius = body.radius + change.deltaR;
+		return { ...body, velocity, position, mass, radius,static:sttic };
 	});
 }

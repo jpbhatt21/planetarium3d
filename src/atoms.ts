@@ -1,7 +1,9 @@
 import { atom, createStore } from "jotai";
 import { theme } from "./theme";
-import { Vector3Tuple } from "three";
+import { Vector3, Vector3Tuple } from "three";
 import { init } from "./simulationLoop";
+import { setBodies } from "./Three";
+import * as THREE from "three";
 //Interfaces
 export interface Body {
 	name: string;
@@ -16,8 +18,64 @@ export interface Body {
 	trailColor: string;
 	forecast: boolean;
 	forecastColor: string;
+	texture:string
 }
-export let preset = [
+
+export const planetTextures = [
+	{
+	  name: "Aeropolis",
+	  key: "aer",
+	},
+	{
+	  name: "Aspectra",
+	  key: "aspt"
+	},
+	{
+	  name: "Cyclowake",
+	  key: "ccw"
+	},
+	{
+	  name: "Consortia Winds",
+	  key: "conw"
+	},
+	{
+	  name: "Cragoth",
+	  key: "crg"
+	},
+	{
+	  name: "Caesaria",
+	  key: "csr"
+	},
+	{
+	  name: "Defacto Prime",
+	  key: "dcf"
+	},
+	{
+	  name: "Defacto Secondary",
+	  key: "dcf2"
+	},
+	{
+		name:"Earth",
+		key:"earth"
+	},
+	{
+	  name: "Gravifold",
+	  key: "gf"
+	},
+	{
+	  name: "Gasandra",
+	  key: "gs"
+	},
+	{
+	  name: "Heliocroft",
+	  key: "hcf"
+	},
+	{
+	  name: "Pulsarwind",
+	  key: "psw"
+	}
+  ]
+  export let preset = [
 	{
 		name: "Star",
 		data: {
@@ -34,15 +92,56 @@ export let preset = [
 					radius: 50,
 					position: [500, 500, 0],
 					velocity: [0.1, 0.1, 0],
+					static: true,
+					fixedColor: true,
+					color: "#5e81ac",
+					trail: true,texture: "hcf",
+					trailColor: "#8fbcbb",
+					forecast: true,
+					forecastColor: "#81a1c1",
+				},
+				{
+					name: "planet",
+					mass: 10000,
+					radius: 50,
+					position: [0, 0, 0],
+					velocity: [-0.1, -0.1, 0],
 					static: false,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
 					forecastColor: "#81a1c1",
 				},
 			],
+		},
+	},
+	{
+		name: "Star",
+		data: {
+			version: "1.1.0",
+			speed: 0,
+			G: 0.0667,
+			collisionEnergyLoss: 0.01,
+			scale: 0.5,
+			anchor: 1,
+			bodies:planetTextures.map((texture,index)=>{
+				return {
+					name: "planet",
+					mass: 10000,
+					radius: 50,
+					position: [100*index, 100*index, 0],
+					velocity: [0.1, 0.1, 0],
+					static: true,
+					fixedColor: true,
+					color: "#5e81ac",
+					trail: true,texture: texture.key,
+					trailColor: "#8fbcbb",
+					forecast: true,
+					forecastColor: "#81a1c1",
+				}
+			}),
 		},
 	},
 	{
@@ -64,7 +163,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
 					forecastColor: "#81a1c1",
@@ -78,7 +177,7 @@ export let preset = [
 					static: false,
 					fixedColor: false,
 					color: "#a3be8c",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
 					forecastColor: "#d08770",
@@ -105,7 +204,7 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
 					forecastColor: "#81a1c1",
@@ -119,12 +218,11 @@ export let preset = [
 					static: false,
 					fixedColor: false,
 					color: "#a3be8c",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
 					forecastColor: "#d08770",
 				},
-				
 			],
 		},
 	},
@@ -147,7 +245,7 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#d3a645",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
 					forecastColor: "#81a1c1",
@@ -161,7 +259,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#a6943a",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#2e3440",
 					forecast: true,
 					forecastColor: "#868446",
@@ -175,7 +273,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#ebcb8b",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
 					forecastColor: "#ebcb8b",
@@ -189,7 +287,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#629bd0",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#434c5e",
 					forecast: true,
 					forecastColor: "#8d9cbf",
@@ -203,7 +301,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#e05252",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#4c566a",
 					forecast: true,
 					forecastColor: "#c86f6f",
@@ -217,7 +315,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#dfd1b3",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#434c5e",
 					forecast: true,
 					forecastColor: "#bcad8f",
@@ -244,7 +342,7 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
 					forecastColor: "#81a1c1",
@@ -258,7 +356,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#bf616a",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#2e3440",
 					forecast: true,
 					forecastColor: "#bf616a",
@@ -272,7 +370,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#d08770",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
 					forecastColor: "#d08770",
@@ -286,7 +384,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#ebcb8b",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#434c5e",
 					forecast: true,
 					forecastColor: "#ebcb8b",
@@ -300,7 +398,7 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#a3be8c",
-					trail: true,
+					trail: true,texture: "hcf",
 					trailColor: "#4c566a",
 					forecast: true,
 					forecastColor: "#a3be8c",
@@ -309,27 +407,32 @@ export let preset = [
 		},
 	},
 ];
-
 //Atoms
+export const playingAtom = atom(false);
 export const store = createStore();
 export const bodiesAtom = atom([] as Body[]);
-export const focusAtom = atom(-2);
+export const focusAtom = atom(0);
 export const trailsAtom = atom([] as Vector3Tuple[][]);
 export const forecastBodyStateAtom = atom([] as Body[][]);
 export const forecastPositionAtom = atom([] as Vector3Tuple[][]);
 export const forecastLimitAtom = atom(10000);
 export const trailLimitAtom = atom(10000);
 export const animationKeyAtom = atom(-1);
-export const gravitationalConstantAtom = atom(6.6743e-5);
-export const timeStepAtom = atom(10);
+export const gravitationalConstantAtom = atom(6.6743e-2);
+export const timeStepAtom = atom(1);
 export const elasticitiyAtom = atom(0.8);
-export const bodyRefAtom = atom({current:[]} as React.MutableRefObject<any>);
-export const trailRefAtom = atom({current:[]} as React.MutableRefObject<any>);
-export const forecastRefAtom = atom({current:[]} as React.MutableRefObject<any>);
+export const bodyRefAtom = atom({ current: [] } as React.MutableRefObject<any>);
+export const radiusRefAtom = atom({ current: [] } as React.MutableRefObject<any>);
+export const trailRefAtom = atom({
+	current: [],
+} as React.MutableRefObject<any>);
+export const forecastRefAtom = atom({
+	current: [],
+} as React.MutableRefObject<any>);
 export const colorChangerAtom = atom("#-1");
 export const bgLoadedAtom = atom(false);
-export const bgAtom= atom("q")
-export const bgQual= atom("2")
+export const bgAtom = atom("q");
+export const bgQual = atom("2");
 
 //Functions
 export function makeDefaultBody(props: object = {}): Body {
@@ -346,6 +449,7 @@ export function makeDefaultBody(props: object = {}): Body {
 		trailColor: Object.values(theme.nord.dark)[
 			Math.floor(Math.random() * 4)
 		],
+		texture: "hcf",
 		forecast: false,
 		forecastColor: Object.values(theme.nord.frost)[
 			Math.floor(Math.random() * 4)
@@ -353,11 +457,49 @@ export function makeDefaultBody(props: object = {}): Body {
 		...props,
 	};
 }
+export async function loadPreset(index: number) {
+	store.set(playingAtom, false);
+	window.cancelAnimationFrame(store.get(animationKeyAtom));
+	store.set(animationKeyAtom, -1);
+	let trailRefs = store.get(trailRefAtom);
+	let forecastRefs = store.get(forecastRefAtom);
+
+	for (let index = 0; index < store.get(bodiesAtom).length; index++) {
+		if (trailRefs.current[index]) {
+			trailRefs.current[index].geometry.dispose();
+			trailRefs.current[index].geometry =
+				new THREE.BufferGeometry().setFromPoints([
+					
+					new Vector3(0,0,0)
+				]);
+		}
+	
+		if (forecastRefs.current[index]) {
+			forecastRefs.current[index].geometry.dispose();
+			forecastRefs.current[index].geometry =
+				new THREE.BufferGeometry().setFromPoints([
+					new Vector3(0,0,0)
+				]);
+		}
+	}
+	store.set(trailRefAtom, { current: [] });
+	store.set(bodyRefAtom, { current: [] });
+	store.set(forecastRefAtom, { current: [] });
+	store.set(forecastBodyStateAtom, []);
+	store.set(trailsAtom, []);
+	store.set(bodiesAtom, preset[index].data.bodies as Body[]);
+	setBodies(preset[index].data.bodies as Body[]);
+	init(false,true);
+	store.set(colorChangerAtom, "#preset" + index);
+}
 
 function main() {
-	store.set(bodiesAtom, preset[4].data.bodies as Body[]);
-    init();
-	
+	store.set(bodiesAtom, preset[0].data.bodies as Body[]);
+	setBodies(preset[0].data.bodies as Body[]);
+
+	init();
+	store.set(colorChangerAtom, "#preset" + 4);
+
 	return;
 }
 

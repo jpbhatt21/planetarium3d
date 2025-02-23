@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppSidebar from "./AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import Three from "./Three";
@@ -8,11 +8,24 @@ import { Canvas } from "@react-three/fiber";
 import { svg } from "./vectors";
 import { useAtom } from "jotai";
 import { bgAtom, bgLoadedAtom, bgQual } from "./atoms";
+let init:any=new Date().getTime()
 function App() {
 	const [open, setOpen] = useState(true);
   const [loaded] = useAtom(bgLoadedAtom)
   const [bg]=useAtom(bgAtom)
   const [bgQ]=useAtom(bgQual)
+  useEffect(() => {
+   
+    if(loaded){
+      let now = new Date().getTime()
+      let diff = now-init
+    console.log("Loading took ",diff,"ms")
+    }
+    else{
+      init=new Date().getTime()
+    }
+  }
+  ,[loaded])
 	return (
 		<>
 			<div className="fixed h-full w-full flex items-center justify-center text-white flex-col">
@@ -48,7 +61,7 @@ function App() {
 						}}>
 						<SidebarTrigger id="sidebarTrig" className=" " />
 					</div>
-					<div className="fixed w-full flex flex-col pointer-events-none duration-700 transition-opacity  ease-linear gap-2 items-center justify-center h-full z-10 bg-background"
+					<div className="fixed w-full flex flex-col pointer-events-none duration-200 transition-opacity  ease-linear gap-2 items-center justify-center h-full z-10 bg-background"
           style={{
             opacity: loaded?0:1,
             pointerEvents: loaded?"none":"all"
