@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppSidebar from "./AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import Three from "./Three";
@@ -7,25 +7,62 @@ import { Environment } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { svg } from "./vectors";
 import { useAtom } from "jotai";
-import { bgAtom, bgLoadedAtom, bgQual } from "./atoms";
-let init:any=new Date().getTime()
+import {
+	bgAtom,
+	bgLoadedAtom,
+	bgQual,
+	findImportTime,
+	speedAtom,
+	store,
+	timeAtom,
+} from "./atoms";
+let init: any = new Date().getTime();
+let init2: any = new Date().getTime();
+await fetch("/1mb.txt").then(() => {
+	let now = new Date().getTime();
+	let diff = now - init2;
+	let speed = 1 / (diff / 1024);
+	store.set(speedAtom, speed);
+	console.log("Download speed is ", speed, "Mb/s");
+	console.log("Expected load time is ", findImportTime(1), "s");
+});
+let loaderInterval: any = null;
 function App() {
 	const [open, setOpen] = useState(true);
-  const [loaded] = useAtom(bgLoadedAtom)
-  const [bg]=useAtom(bgAtom)
-  const [bgQ]=useAtom(bgQual)
-  useEffect(() => {
-   
-    if(loaded){
-      let now = new Date().getTime()
-      let diff = now-init
-    console.log("Loading took ",diff,"ms")
-    }
-    else{
-      init=new Date().getTime()
-    }
-  }
-  ,[loaded])
+	const [loaded] = useAtom(bgLoadedAtom);
+	const loader = useRef<HTMLDivElement>(null);
+	const timeRemaining = useRef<HTMLLabelElement>(null);
+	const [bg] = useAtom(bgAtom);
+	const [bgQ] = useAtom(bgQual);
+	const [time] = useAtom(timeAtom);
+	useEffect(() => {
+		if (loaded) {
+			let now = new Date().getTime();
+			let diff = now - init;
+			console.log("Loading took ", diff, "ms");
+			clearInterval(loaderInterval);
+			if (loader.current) loader.current.style.width = "100%";
+		} else {
+			init = new Date().getTime();
+			loaderInterval = setInterval(() => {
+				if (loader.current) {
+					let perct = (new Date().getTime() - init) / (6 * time);
+					loader.current.style.width =
+						(perct >= 98 ? 98 : perct) + "%";
+					
+				}
+				if (timeRemaining.current) {
+					let timeLeft = time*0.6 - (new Date().getTime() - init) / 1000;
+					if (timeLeft > 0) {
+						timeRemaining.current.innerText =
+							"Time Remaining: " + timeLeft.toFixed(0) + "s";
+					} else {
+						timeRemaining.current.innerText = "Almost There";
+					}
+				}
+			}, 100);
+		}
+	}, [loaded, time]);
 	return (
 		<>
 			<div className="fixed h-full w-full flex items-center justify-center text-white flex-col">
@@ -47,7 +84,7 @@ function App() {
 								backgroundColor: "#09090b",
 							}}>
 							<Environment
-								files={"/"+bg+""+bgQ+".hdr"}
+								files={"/" + bg + "" + bgQ + ".hdr"}
 								background
 								environmentIntensity={1}
 							/>
@@ -61,15 +98,13 @@ function App() {
 						}}>
 						<SidebarTrigger id="sidebarTrig" className=" " />
 					</div>
-					<div className="fixed w-full flex flex-col pointer-events-none duration-200 transition-opacity  ease-linear gap-2 items-center justify-center h-full z-10 bg-background"
-          style={{
-            opacity: loaded?0:1,
-            pointerEvents: loaded?"none":"all"
-          }}
-          >
-						<div
-							className=" flex overflow-hidden my-2 w-64 flex-row mts  ease-linear gap-2 text-xl justify-center items-center"
-							>
+					<div
+						className="fixed w-full flex flex-col pointer-events-none duration-200 transition-opacity  ease-linear gap-2 items-center justify-center h-full z-10 bg-background"
+						style={{
+							opacity: loaded ? 0 : 1,
+							pointerEvents: loaded ? "none" : "all",
+						}}>
+						<div className=" flex overflow-hidden my-2 w-64 flex-row mts  ease-linear gap-2 text-xl justify-center items-center">
 							{svg.logo({
 								height: "50px",
 								width: "50px",
@@ -80,11 +115,27 @@ function App() {
 							</label>
 							{/* <label className=" tracking-wider"> Playground</label> */}
 						</div>
-              <div className="flex items-center gap-1 text-muted-foreground  justify-center w-64">
-                <div className="w-full border"></div>
-                <label className="min-w-fit mts">Loading Assets</label>
-                <div className="w-full border"></div>
-              </div>
+						<div className="flex items-center gap-1 text-muted-foreground  justify-center w-64">
+							<div className="w-full border"></div>
+							<label className="min-w-fit mts">
+								Loading Assets
+							</label>
+							<div className="w-full border"></div>
+						</div>
+						<div className="w-64 h-2 border rounded-full overflow-hidden">
+							<div
+								ref={loader}
+								className="w-0 duration-100 h-full bg-border"></div>
+						</div>
+						<div className="flex items-center gap-1 text-muted-foreground mt-1  justify-center w-64">
+							<div className="w-full border"></div>
+							<label
+								ref={timeRemaining}
+								className="min-w-fit text-muted-foreground mts text-xs">
+								Time Remaining: 0s
+							</label>
+							<div className="w-full border"></div>
+						</div>
 					</div>
 				</SidebarProvider>
 			</div>

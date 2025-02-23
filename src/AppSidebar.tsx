@@ -33,6 +33,7 @@ import {
 	bodyRefAtom,
 	colorChangerAtom,
 	elasticitiyAtom,
+	findImportTime,
 	focusAtom,
 	forecastLimitAtom,
 	gravitationalConstantAtom,
@@ -425,6 +426,7 @@ function AppSidebar({ open }: { open: boolean }) {
 													className="cursor-pointer border"
 													onClick={() => {
 														setBG(p.code);
+														findImportTime(parseInt(bgQ)-1)
 														setLoaded(false);
 													}}
 													style={{
@@ -459,6 +461,7 @@ function AppSidebar({ open }: { open: boolean }) {
 												className="cursor-pointer w-full rounded-sm  flex items-center justify-center border"
 												onClick={() => {
 													setBGQ(p.code);
+													findImportTime(parseInt(p.code)-1)
 													setLoaded(false);
 												}}
 												style={{
@@ -966,6 +969,7 @@ function AppSidebar({ open }: { open: boolean }) {
 																					).toString(
 																						16
 																					));
+																					findImportTime(parseInt(bgQ)-1)
 
 																			setLoaded(
 																				false)
