@@ -68,14 +68,14 @@ function Three() {
 		if (!props.emmissive) {
 			const diff = useLoader(
 				TextureLoader,
-				"/textures/" +
+				"/files/textures/" +
 					name +
 					(name == "earth" ? "" : quality + 1) +
 					"/diff.jpg"
 			);
 			const disp = useLoader(
 				TextureLoader,
-				"/textures/" +
+				"/files/textures/" +
 					name +
 					(name == "earth" ? "" : quality + 1) +
 					"/disp.jpg"
@@ -85,11 +85,11 @@ function Three() {
 			if (name !== "earth") {
 				const normal = useLoader(
 					TextureLoader,
-					"/textures/" + props.texture + (quality + 1) + "/nor.jpg"
+					"/files/textures/" + props.texture + (quality + 1) + "/nor.jpg"
 				);
 				const arm = useLoader(
 					TextureLoader,
-					"/textures/" + props.texture + (quality + 1) + "/arm.jpg"
+					"/files/textures/" + props.texture + (quality + 1) + "/arm.jpg"
 				);
 				texture["normalMap"] = normal;
 				texture["roughnessMap"] = arm;

@@ -481,7 +481,6 @@ export const textureSizes = [
 		psw: 37.4,
 	},
 ];
-export const CDN = "https://cdn.jpbhatt.tech";
 let previouslyLoaded = [] as string[];
 export function findImportTime(qual:number) {
 	let size = 0;

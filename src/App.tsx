@@ -9,7 +9,6 @@ import { svg } from "./vectors";
 import { useAtom } from "jotai";
 import {
 	bgLoadedAtom,
-	CDN,
 	con,
 	consoleText,
 	findImportTime,
@@ -21,7 +20,7 @@ import {
 import { Textarea } from "./components/ui/textarea";
 let init: any = new Date().getTime();
 let init2: any = new Date().getTime();
-fetch("/1mb.txt",{
+fetch("/files/1mb.txt",{
 	cache: "no-store"
 }).then(() => {
 	let now = new Date().getTime();
@@ -31,15 +30,7 @@ fetch("/1mb.txt",{
 	con.log("Connection Speed: ", (speed/8).toFixed(2), "  MB/s (est.)");
 	con.log("Load Time: ", (findImportTime(1)*1000).toFixed(0), " ms (est.)");
 });
-try{
-	fetch(CDN+"/1mb.txt").then(() => {
-		console.log("worked")
-	});
 
-}
-catch(e){
-	console.log("Failed")
-}
 let loaderInterval: any = null;
 function App() {
 	const [open, setOpen] = useState(true);
@@ -120,8 +111,9 @@ function App() {
 								backgroundColor: "#09090b",
 							}}>
 							<Environment
-								files={"/" + bg + "" + (bgQ+1) + ".hdr"}
+								files={"/files/" + bg + "" + (bgQ+1) + ".hdr"}
 								background
+								
 								environmentIntensity={1}
 							/>
 							<Three />
