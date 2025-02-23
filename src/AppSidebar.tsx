@@ -26,26 +26,41 @@ import {
 } from "./components/ui/collapsible";
 import { useAtom } from "jotai";
 import {
-	bgAtom,
 	bgLoadedAtom,
-	bgQual,
 	bodiesAtom,
 	bodyRefAtom,
 	colorChangerAtom,
-	elasticitiyAtom,
 	findImportTime,
 	focusAtom,
-	forecastLimitAtom,
-	gravitationalConstantAtom,
 	loadPreset,
 	planetTextures,
 	preset,
+	settingsAtom,
 	store,
-	timeStepAtom,
-	trailLimitAtom,
+	version,
 } from "./atoms";
 import { init } from "./simulationLoop";
 import { Checkbox } from "./components/ui/checkbox";
+import {
+	DropdownMenuGroup,
+	DropdownMenuLabel,
+	Label,
+} from "@radix-ui/react-dropdown-menu";
+import { Button } from "./components/ui/button";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "./components/ui/alert-dialog";
+import { Textarea } from "./components/ui/textarea";
+import { Slider } from "./components/ui/slider";
+let change: any = null;
 const spaces = ["Universal Settings", "Bodies", "Presets"];
 const separator = (
 	<div className="border-t border-primary-foreground w-9/10 self-center mt-1 fadein"></div>
@@ -60,34 +75,29 @@ const bgNames = [
 		code: "s",
 	},
 ];
-const quality = [
-	{
-		level: "Low",
-		code: "1",
-	},
-	{
-		level: "Medium",
-		code: "2",
-	},
-	{
-		level: "High",
-		code: "3",
-	},
-];
+const quality = ["Low", "Medium", "High"];
 function AppSidebar({ open }: { open: boolean }) {
 	const [space, setSpace] = useState(0);
 	const [anchor, setAnchor] = useAtom(focusAtom);
 	const [bodies, setBodies] = useAtom(bodiesAtom);
 	const [openArr, setOpenArr] = useState(Array(bodies.length).fill(true));
-	const [G, setG] = useAtom(gravitationalConstantAtom);
-	const [DT, setDT] = useAtom(timeStepAtom);
-	const [E, setE] = useAtom(elasticitiyAtom);
-	const [forecastLimit, setForecastLimit] = useAtom(forecastLimitAtom);
-	const [trailLimit, setTrailLimit] = useAtom(trailLimitAtom);
+	const [settings, setSettings] = useAtom(settingsAtom);
+	function setSettingsItem(key: string, value: any) {
+		setSettings((prev) => {
+			return { ...prev, [key]: value };
+		});
+		init();
+	}
+	const G = settings.gravitationalConstant;
+	const DT = settings.timeStep;
+	const E = settings.elasticitiy;
+	const forecastLimit = settings.forecastLimit;
+	const trailLimit = settings.trailLimit;
+	const bg = settings.background;
+	const bgQ = settings.textureQuality;
 	const [_, setColorChange] = useAtom(colorChangerAtom);
 	const [__, setLoaded] = useAtom(bgLoadedAtom);
-	const [bg, setBG] = useAtom(bgAtom);
-	const [bgQ, setBGQ] = useAtom(bgQual);
+
 	const [gRef, dtRef, eRef, foreRef, trailRef] = [
 		useRef<HTMLInputElement>(null),
 		useRef<HTMLInputElement>(null),
@@ -214,8 +224,10 @@ function AppSidebar({ open }: { open: boolean }) {
 								onBlur={(e) => {
 									let value = parseFloat(e.target.value);
 									if (!isNaN(value) && value !== DT) {
-										setDT(Math.max(0, value));
-										init();
+										setSettingsItem(
+											"timeStep",
+											Math.max(0, value)
+										);
 									}
 								}}
 								onKeyDown={(e) => {
@@ -223,9 +235,11 @@ function AppSidebar({ open }: { open: boolean }) {
 										let value = parseFloat(
 											e.currentTarget.value
 										);
-										if (!isNaN(value)) {
-											setDT(Math.max(0, value));
-											init();
+										if (!isNaN(value) && value !== DT) {
+											setSettingsItem(
+												"timeStep",
+												Math.max(0, value)
+											);
 										}
 									}
 								}}
@@ -241,8 +255,10 @@ function AppSidebar({ open }: { open: boolean }) {
 								onBlur={(e) => {
 									let value = parseFloat(e.target.value);
 									if (!isNaN(value) && value !== G) {
-										setG(value);
-										init();
+										setSettingsItem(
+											"gravitationalConstant",
+											value
+										);
 									}
 								}}
 								onKeyDown={(e) => {
@@ -250,9 +266,11 @@ function AppSidebar({ open }: { open: boolean }) {
 										let value = parseFloat(
 											e.currentTarget.value
 										);
-										if (!isNaN(value)) {
-											setG(value);
-											init();
+										if (!isNaN(value) && value !== G) {
+											setSettingsItem(
+												"gravitationalConstant",
+												value
+											);
 										}
 									}
 								}}
@@ -268,8 +286,10 @@ function AppSidebar({ open }: { open: boolean }) {
 								onBlur={(e) => {
 									let value = parseFloat(e.target.value);
 									if (!isNaN(value) && value !== E) {
-										setE(Math.min(1, Math.max(0, value)));
-										init();
+										setSettingsItem(
+											"elasticitiy",
+											Math.min(1, Math.max(0, value))
+										);
 									}
 								}}
 								onKeyDown={(e) => {
@@ -277,11 +297,11 @@ function AppSidebar({ open }: { open: boolean }) {
 										let value = parseFloat(
 											e.currentTarget.value
 										);
-										if (!isNaN(value)) {
-											setE(
+										if (!isNaN(value) && value !== E) {
+											setSettingsItem(
+												"elasticitiy",
 												Math.min(1, Math.max(0, value))
 											);
-											init();
 										}
 									}
 								}}
@@ -300,8 +320,10 @@ function AppSidebar({ open }: { open: boolean }) {
 										!isNaN(value) &&
 										value !== forecastLimit
 									) {
-										setForecastLimit(Math.max(0, value));
-										init();
+										setSettingsItem(
+											"forecastLimit",
+											Math.max(0, value)
+										);
 									}
 								}}
 								onKeyDown={(e) => {
@@ -310,10 +332,10 @@ function AppSidebar({ open }: { open: boolean }) {
 											e.currentTarget.value
 										);
 										if (!isNaN(value)) {
-											setForecastLimit(
+											setSettingsItem(
+												"forecastLimit",
 												Math.max(0, value)
 											);
-											init();
 										}
 									}
 								}}
@@ -329,8 +351,10 @@ function AppSidebar({ open }: { open: boolean }) {
 								onBlur={(e) => {
 									let value = parseFloat(e.target.value);
 									if (!isNaN(value) && value !== trailLimit) {
-										setTrailLimit(Math.max(0, value));
-										init();
+										setSettingsItem(
+											"trailLimit",
+											Math.max(0, value)
+										);
 									}
 								}}
 								onKeyDown={(e) => {
@@ -338,9 +362,14 @@ function AppSidebar({ open }: { open: boolean }) {
 										let value = parseFloat(
 											e.currentTarget.value
 										);
-										if (!isNaN(value)) {
-											setTrailLimit(Math.max(0, value));
-											init();
+										if (
+											!isNaN(value) &&
+											value !== trailLimit
+										) {
+											setSettingsItem(
+												"trailLimit",
+												Math.max(0, value)
+											);
 										}
 									}
 								}}
@@ -425,8 +454,11 @@ function AppSidebar({ open }: { open: boolean }) {
 													key={i}
 													className="cursor-pointer border"
 													onClick={() => {
-														setBG(p.code);
-														findImportTime(parseInt(bgQ)-1)
+														setSettingsItem(
+															"background",
+															p.code
+														);
+														findImportTime(bgQ);
 														setLoaded(false);
 													}}
 													style={{
@@ -447,11 +479,7 @@ function AppSidebar({ open }: { open: boolean }) {
 							<SidebarMenuItem className="flex flex-col">
 								<CollapsibleTrigger className="w-full flex justify-between pr-3 items-center text-start">
 									Texture Quality{" "}
-									<label>
-										{quality.map((x) => {
-											return x.code == bgQ ? x.level : "";
-										})}
-									</label>
+									<label>{quality[bgQ]}</label>
 								</CollapsibleTrigger>
 								<CollapsibleContent className=" flex w-full py-2 gap-1">
 									{quality.map((p, i) => {
@@ -460,26 +488,449 @@ function AppSidebar({ open }: { open: boolean }) {
 												key={i}
 												className="cursor-pointer w-full rounded-sm  flex items-center justify-center border"
 												onClick={() => {
-													setBGQ(p.code);
-													findImportTime(parseInt(p.code)-1)
+													setSettingsItem(
+														"textureQuality",
+														i
+													);
+													findImportTime(i);
 													setLoaded(false);
 												}}
 												style={{
 													borderColor:
-														p.code == bgQ
+														i == bgQ
 															? "#fff1"
 															: "transparent",
 												}}>
-												{p.level}
+												{p}
 											</SidebarMenuSubButton>
 										);
 									})}
 								</CollapsibleContent>
 							</SidebarMenuItem>
 						</Collapsible>
+						<SidebarMenuSubItem className="w-full flex my-2 items-center justify-between text-start">
+							<label>Ambient Lighting</label>
+							<Checkbox
+								checked={settings.ambientLight}
+								onCheckedChange={(e: boolean) => {
+									setSettingsItem("ambientLight", e);
+								}}
+							/>
+						</SidebarMenuSubItem>
+						<SidebarMenuSubItem className="w-full flex  my-2 items-center justify-between text-start">
+							<label>Bloom</label>
+							<Checkbox
+								checked={settings.bloom}
+								onCheckedChange={(e: boolean) => {
+									setSettingsItem("bloom", e);
+								}}
+							/>
+						</SidebarMenuSubItem>
+						<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4  justify-between text-start">
+							<label>Ambient Lighting Intensity</label>
+							<div className="w-full mt-4 flex gap-1">
+								<Slider
+									defaultValue={[
+										settings.ambientLightIntensity,
+									]}
+									onValueChange={(e) => {
+										if (change != null) {
+											clearTimeout(change);
+										}
+										change = setTimeout(() => {
+											setSettingsItem(
+												"ambientLightIntensity",
+												e
+											);
+										}, 100);
+									}}
+									step={1}
+									min={0}
+									max={100}
+								/>
+							</div>
+						</SidebarMenuSubItem>
+						<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4  justify-between text-start">
+							<label>Bloom Intensity</label>
+							<div className="w-full mt-4 flex gap-1">
+								<Slider
+									defaultValue={[settings.bloomIntensity]}
+									onValueChange={(e) => {
+										if (change != null) {
+											clearTimeout(change);
+										}
+										change = setTimeout(() => {
+											setSettingsItem(
+												"bloomIntensity",
+												e
+											);
+										}, 100);
+									}}
+									step={0.1}
+									min={0}
+									max={10}
+								/>
+							</div>
+						</SidebarMenuSubItem>
+						<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4 justify-between text-start">
+							<label>Emmissive Light Decay</label>
+							<Slider
+								className="w-full mt-4 flex gap-1"
+								defaultValue={[settings.emmissiveLightDecay]}
+								onValueChange={(e) => {
+									if (change != null) {
+										clearTimeout(change);
+									}
+									change = setTimeout(() => {
+										setSettingsItem(
+											"emmissiveLightDecay",
+											e
+										);
+									}, 100);
+								}}
+								step={0.01}
+								min={0}
+								max={1}
+							/>
+						</SidebarMenuSubItem>
+						<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4  justify-between text-start">
+							<label>Emmisive Light Multiplier </label>
+							<div className="w-full mt-4 flex gap-1">
+								<Slider
+									defaultValue={[
+										settings.emmissiveLightMultiplier,
+									]}
+									onValueChange={(e) => {
+										if (change != null) {
+											clearTimeout(change);
+										}
+										change = setTimeout(() => {
+											setSettingsItem(
+												"emmissiveLightMultiplier",
+												e
+											);
+										}, 100);
+									}}
+									step={1}
+									min={1}
+									max={100}
+								/>
+							</div>
+						</SidebarMenuSubItem>
+						<SidebarMenuItem className="w-full gap-1 flex flex-col ">
+							<Label>Data</Label>
+							<div className="w-full gap-1 flex ">
+								<SidebarMenuButton className="w-full  h-10  border rounded-sm items-center justify-center">
+									Save Preset
+								</SidebarMenuButton>
+								<DropdownMenu>
+									<DropdownMenuTrigger
+										onFocus={(e) => {
+											e.currentTarget.blur();
+										}}
+										className="w-115/100">
+										<SidebarMenuButton
+											className="w-full h-10  bg-background text-foreground hover:bg-foreground hover:text-primary-foreground duration-300    items-center justify-center border"
+											style={{
+												transitionProperty:
+													"width, color, background-color",
+											}}>
+											{open ? "Export" : "Exp"}
+										</SidebarMenuButton>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent className="w-56 mb-2 ml -80 justify-center items-center flex flex-col bg-background border rounded-md">
+										<DropdownMenuLabel className="text-center">
+											Export Data
+										</DropdownMenuLabel>
+										{separator}
+										<DropdownMenuGroup className="py-2">
+											<div className=" border rounded-md  mb-1">
+												<Input
+													type="text"
+													id="filename"
+													className="w-full h-8 text-end"
+													defaultValue="config.json"
+													onChange={(e) => {
+														let filename: any =
+															e.target.value.split(
+																"."
+															);
+														if (
+															filename.length >
+																1 &&
+															filename[
+																filename.length -
+																	1
+															].toLowerCase() !=
+																"json"
+														) {
+															filename.pop();
+															filename =
+																filename.join(
+																	"."
+																) + ".json";
+															e.target.value =
+																filename;
+														}
+													}}
+												/>
+											</div>
+											<div className="flex gap-2">
+												<Button
+													className="w-1/2 bg-background border text-accent-foreground hover:bg-accent-foreground hover:text-primary-foreground duration-300 transition-colors"
+													onClick={() => {
+														let data =
+															JSON.stringify({
+																version:
+																	version,
+																dt: DT,
+																G: G,
+																e: E,
+																anchor: anchor,
+																bodies: bodies,
+															});
+														navigator.clipboard.writeText(
+															data
+														);
+													}}>
+													Copy
+												</Button>
+												<Button
+													className="w-1/2 bg-background border text-accent-foreground hover:bg-accent-foreground hover:text-primary-foreground duration-300 transition-colors"
+													onClick={() => {
+														let data =
+															JSON.stringify({
+																version:
+																	version,
+																dt: DT,
+																G: G,
+																e: E,
+																anchor: anchor,
+																bodies: bodies,
+															});
+														let filename: any =
+															document.getElementById(
+																"filename"
+															) as HTMLInputElement;
+														filename =
+															filename.value.split(
+																"."
+															);
+														if (
+															filename.length > 1
+														) {
+															filename.pop();
+															filename =
+																filename.join(
+																	"."
+																) + ".json";
+														} else if (
+															filename.length == 1
+														) {
+															filename =
+																filename[0] +
+																".json";
+														} else {
+															filename =
+																"config.json";
+														}
+														let file = new Blob(
+															[data],
+															{
+																type: "application/json",
+															}
+														);
+														let a =
+															document.createElement(
+																"a"
+															);
+														a.href =
+															URL.createObjectURL(
+																file
+															);
+														a.download = filename;
+														a.click();
+													}}>
+													Download
+												</Button>
+											</div>
+										</DropdownMenuGroup>
+									</DropdownMenuContent>
+								</DropdownMenu>
+								<AlertDialog>
+									<AlertDialogTrigger className="w-115/100">
+										<SidebarMenuButton
+											className="w-full h-10 bg-background text-accent-foreground hover:bg-accent-foreground hover:text-primary-foreground duration-300  items-center justify-center border"
+											style={{
+												transitionProperty:
+													"width, color, background-color",
+											}}>
+											{open ? "Import" : "Imp"}
+										</SidebarMenuButton>
+									</AlertDialogTrigger>
+									<AlertDialogContent>
+										<AlertDialogHeader>
+											<AlertDialogTitle className="text-center mb-4">
+												Import Data
+											</AlertDialogTitle>
+											<AlertDialogDescription className="flex  flex-col items-center">
+												<Textarea
+													placeholder="Paste text or file here..."
+													autoFocus={true}
+													id="pastebox"
+													onPaste={(e) => {
+														if (
+															e.clipboardData
+																.files.length >
+															0
+														) {
+															e.preventDefault();
+															let file =
+																e.clipboardData
+																	.files[0];
+															console.log(
+																file.type
+															);
+															if (
+																file.type ==
+																"application/json"
+															) {
+																let filebox =
+																	document.getElementById(
+																		"filebox"
+																	) as HTMLInputElement;
+																let label =
+																	document.getElementById(
+																		"filelabel"
+																	) as HTMLLabelElement;
+																filebox.files =
+																	e.clipboardData.files;
+																label.innerText =
+																	file.name;
+															}
+														}
+													}}
+													className="w-[29rem] border-dashed py-3 h-40 resize-none"
+												/>
+												<Input
+													type="file"
+													id="filebox"
+													className="hidden"
+													accept="application/JSON"
+													onChange={(e) => {
+														let label =
+															document.getElementById(
+																"filelabel"
+															) as HTMLLabelElement;
+														if (
+															e.target.files !=
+															null
+														) {
+															label.innerText =
+																e.target.files[0].name;
+														} else {
+															label.innerText =
+																"Choose File";
+														}
+													}}
+												/>
+												<label
+													htmlFor="filebox"
+													id="filelabel"
+													className="cursor-pointer p-2 rounded-sm border self-end bg-background border-dashed -mt-9 h-9 items-center justify-center flex">
+													Choose File
+												</label>
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel className="mr-1 bg-background w-24 rounded-md text-nord-aurora-red hover:bg-nord-aurora-red hover:text-primary-foreground duration-300 transition-colors">
+												Cancel
+											</AlertDialogCancel>
+											<AlertDialogAction
+												className="  w-24 bg-background border text-accent-foreground hover:bg-accent-foreground hover:text-primary-foreground duration-300 transition-colors"
+												onClick={() => {
+													let pastebox =
+														document.getElementById(
+															"pastebox"
+														) as HTMLTextAreaElement;
+													let filebox =
+														document.getElementById(
+															"filebox"
+														) as HTMLInputElement;
+													if (
+														filebox.files &&
+														filebox.files.length > 0
+													) {
+														let file =
+															filebox.files[0];
+														if (file == null)
+															return;
+														let reader =
+															new FileReader();
+														reader.onload = (e) => {
+															let data =
+																JSON.parse(
+																	e.target
+																		?.result as string
+																);
+															loadPreset(
+																-1,
+																data
+															);
+															// setImportedData(
+															// 	data
+															// );
+															// setCenter({
+															// 	x:
+															// 		window.innerWidth /
+															// 		2,
+															// 	y:
+															// 		window.innerHeight /
+															// 		2,
+															// });
+														};
+														reader.readAsText(file);
+													} else {
+														try {
+															let data =
+																JSON.parse(
+																	pastebox.value
+																);
+
+															loadPreset(
+																-1,
+																data
+															);
+
+															// setImportedData(
+															// 	data
+															// );
+															// setCenter({
+															// 	x:
+															// 		window.innerWidth /
+															// 		2,
+															// 	y:
+															// 		window.innerHeight /
+															// 		2,
+															// });
+														} catch (e) {
+															alert(
+																"Invalid JSON"
+															);
+														}
+													}
+												}}>
+												Import
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
+							</div>
+						</SidebarMenuItem>
 					</SidebarMenu>
 					<SidebarMenu className="w-full pr-2 pb-4 overflow-y-auto ">
 						{bodies.map((body, index) => (
+							<>
 							<Collapsible
 								key={index}
 								open={openArr[index]}
@@ -495,7 +946,7 @@ function AppSidebar({ open }: { open: boolean }) {
 										<Input
 											type="text"
 											value={body.name}
-											className=" cursor-default focus-within:cursor-text "
+											className="  focus-within:cursor-text "
 											style={{
 												outline: "none",
 												border: "none",
@@ -898,7 +1349,7 @@ function AppSidebar({ open }: { open: boolean }) {
 													</div>
 												</div>
 											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+											<SidebarMenuSubItem className="w-full flex items-center my-2 justify-between text-start">
 												<label>Satic Body</label>
 												<Checkbox
 													checked={body.static}
@@ -917,7 +1368,30 @@ function AppSidebar({ open }: { open: boolean }) {
 													}}
 												/>
 											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+											<SidebarMenuSubItem className="w-full flex items-center  my-2 justify-between text-start">
+												<label>Emmissive</label>
+												<Checkbox
+													checked={body.emmissive}
+													onCheckedChange={(
+														checked: boolean
+													) => {
+														setBodies((prev) => {
+															let temp = [
+																...prev,
+															];
+															temp[
+																index
+															].emmissive =
+																checked;
+															return temp;
+														});
+														setColorChange(
+															"#ee1"+index+""+checked
+														);
+													}}
+												/>
+											</SidebarMenuSubItem>
+											<SidebarMenuSubItem className="w-full flex items-center  mb-1 justify-between text-start">
 												<label>Texture</label>
 												<DropdownMenu>
 													<div className="w-1/2 flex items-center">
@@ -926,87 +1400,63 @@ function AppSidebar({ open }: { open: boolean }) {
 															asChild>
 															<SidebarMenuButton className="w-full  ">
 																<label className="w-full  text-end">
-																	{
-																	
-																	planetTextures.map(
+																	{planetTextures.map(
 																		(p) => {
 																			return p.key ==
 																				body.texture
 																				? p.name
 																				: "";
-																		})
 																		}
+																	)}
 																</label>
 															</SidebarMenuButton>
 														</DropdownMenuTrigger>
 													</div>
 													<DropdownMenuContent className="w-[10rem]">
-														{
-															planetTextures.map(
-																(p) => (
-																	<DropdownMenuItem
-																		onClick={() => {
-																			
-																			setBodies(
-																				(
-																					prev
-																				) => {
-																					let temp = [
+														{planetTextures.map(
+															(p) => (
+																<DropdownMenuItem
+																	onClick={() => {
+																		setBodies(
+																			(
+																				prev
+																			) => {
+																				let temp =
+																					[
 																						...prev,
 																					];
-																					temp[
-																						index
-																					].texture =
-																						p.key;
-																					return temp;
-																				}
-																			);
-																			setColorChange(
-																				"#" +
-																					Math.floor(
-																						Math.random() *
-																							16777215
-																					).toString(
-																						16
-																					));
-																					findImportTime(parseInt(bgQ)-1)
+																				temp[
+																					index
+																				].texture =
+																					p.key;
+																				return temp;
+																			}
+																		);
+																		setColorChange(
+																			"#" +
+																				Math.floor(
+																					Math.random() *
+																						16777215
+																				).toString(
+																					16
+																				)
+																		);
+																		findImportTime(
+																			bgQ
+																		);
 
-																			setLoaded(
-																				false)
-																		}}
-																		>
-																		<span>
-																			{p.name}
-																		</span>
-																	</DropdownMenuItem>
-																)
+																		setLoaded(
+																			false
+																		);
+																	}}>
+																	<span>
+																		{p.name}
+																	</span>
+																</DropdownMenuItem>
 															)
-														}
+														)}
 													</DropdownMenuContent>
 												</DropdownMenu>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
-												<label>Static Color</label>
-												<Checkbox
-													checked={body.fixedColor}
-													onCheckedChange={(
-														e: boolean
-													) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[
-																index
-															].fixedColor = e;
-															return temp;
-														});
-
-														setColorChange(
-															e ? "#1" : "#2"
-														);
-													}}
-												/>
 											</SidebarMenuSubItem>
 											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
 												<label>Color</label>
@@ -1032,27 +1482,35 @@ function AppSidebar({ open }: { open: boolean }) {
 													}}
 												/>
 											</SidebarMenuSubItem>
+											
 											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
-												<label>Trail</label>
-												<Checkbox
-													checked={body.trail}
-													onCheckedChange={(
-														e: boolean
-													) => {
+												<label>Emmission Color</label>
+												<Input
+													type="color"
+													className="w-[7rem]"
+													value={body.emmissionColor}
+													onFocus={() =>
+														setColorChange("#0")
+													}
+													onChange={(e) => {
 														setBodies((prev) => {
 															let temp = [
 																...prev,
 															];
-															temp[index].trail =
-																e;
+															temp[
+																index
+															].emmissionColor =
+																e.target.value;
 															return temp;
 														});
 														setColorChange(
-															e ? "#3" : "#4"
+															"ee2"+index+""+e.target.value
 														);
 													}}
 												/>
 											</SidebarMenuSubItem>
+											
+											
 											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
 												<label>Trail Color</label>
 												<Input
@@ -1079,7 +1537,7 @@ function AppSidebar({ open }: { open: boolean }) {
 													}}
 												/>
 											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+											{/* <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
 												<label>Forecast</label>
 												<Checkbox
 													checked={body.forecast}
@@ -1100,7 +1558,7 @@ function AppSidebar({ open }: { open: boolean }) {
 														);
 													}}
 												/>
-											</SidebarMenuSubItem>
+											</SidebarMenuSubItem> */}
 											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
 												<label>Forecast Color</label>
 												<Input
@@ -1127,10 +1585,53 @@ function AppSidebar({ open }: { open: boolean }) {
 													}}
 												/>
 											</SidebarMenuSubItem>
+											<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4  justify-between text-start">
+												<label>Emmission Intensity</label>
+												<div className="w-full mt-4 flex gap-1">
+													<Slider
+														defaultValue={[
+															body.emmissionIntensity,
+														]}
+														onValueChange={(e) => {
+															
+															if (
+																change != null
+															) {
+																clearTimeout(
+																	change
+																);
+															}
+															change = setTimeout(
+																() => {
+																	setBodies((prev) => {
+																		let temp = [
+																			...prev,
+																		];
+																		temp[
+																			index
+																		].emmissionIntensity =
+																			e[0];
+																		return temp;
+																	});
+																	setColorChange(
+																		"#ee3"+index+""+e[0]
+																	);
+																},
+																100
+															);
+														}}
+														step={0.01}
+														min={0}
+														max={10}
+													/>
+												</div>
+											</SidebarMenuSubItem>
 										</SidebarMenuSub>
 									</CollapsibleContent>
 								</SidebarMenuItem>
 							</Collapsible>
+							{separator}
+							</>
 						))}
 					</SidebarMenu>
 					<SidebarMenu className="w-full p-2">

@@ -2,7 +2,6 @@ import { useFrame, useLoader } from "@react-three/fiber";
 import { useAtom } from "jotai";
 import {
 	bgLoadedAtom,
-	bgQual,
 	Body,
 	bodyRefAtom,
 	colorChangerAtom,
@@ -10,6 +9,7 @@ import {
 	forecastRefAtom,
 	loadPreset,
 	playingAtom,
+	settingsAtom,
 	trailRefAtom,
 } from "./atoms";
 import { useEffect, useRef } from "react";
@@ -17,7 +17,11 @@ import { OrbitControls } from "@react-three/drei";
 import { toggleSimulationPlayState } from "./simulationLoop";
 import { TextureLoader, Vector3 } from "three";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-
+import {
+	EffectComposer,
+	Bloom,
+	ToneMapping,
+} from "@react-three/postprocessing";
 // let prevFocus = -1;
 // let prevFocusPos = [0, 0, 0];
 
@@ -35,7 +39,8 @@ function Three() {
 		}
 	}, [colorChange]);
 	const [loaded, setLoaded] = useAtom(bgLoadedAtom);
-	const [quality] = useAtom(bgQual);
+	const [settings] = useAtom(settingsAtom);
+	const quality = settings.textureQuality
 	const [playing, setPlaying] = useAtom(playingAtom);
 	const [focus, setFocus] = useAtom(focusAtom);
 
@@ -43,7 +48,7 @@ function Three() {
 	const [bodyRefs] = useAtom(bodyRefAtom);
 	const [trailRefs] = useAtom(trailRefAtom);
 	const [forecastRefs] = useAtom(forecastRefAtom);
-
+	console.log("render")
 	const camRef = useRef<OrbitControlsImpl>(null);
 	function renderSphere(
 		props: Body,
@@ -53,32 +58,33 @@ function Three() {
 	) {
 		const name = props.texture;
 		const texture = {} as any;
-
-		const diff = useLoader(
-			TextureLoader,
-			"/textures/" + name + (name == "earth" ? "" : quality) + "/diff.jpg"
-		);
-		const disp = useLoader(
-			TextureLoader,
-			"/textures/" + name + (name == "earth" ? "" : quality) + "/disp.jpg"
-		);
-		texture["map"] = diff;
-		texture["displacementMap"] = disp;
-		if (name !== "earth") {
-			const normal = useLoader(
+		if(!props.emmissive){
+			const diff = useLoader(
 				TextureLoader,
-				"/textures/" + props.texture + quality + "/nor.jpg"
+				"/textures/" + name + (name == "earth" ? "" : (quality+1)) + "/diff.jpg"
 			);
-			const arm = useLoader(
+			const disp = useLoader(
 				TextureLoader,
-				"/textures/" + props.texture + quality + "/arm.jpg"
+				"/textures/" + name + (name == "earth" ? "" : (quality+1)) + "/disp.jpg"
 			);
-			texture["normalMap"]=normal
-			texture["roughnessMap"]=arm
-			texture["metalnessMap"]=arm
-			texture["aoMap"]=arm
-			
+			texture["map"] = diff;
+			texture["displacementMap"] = disp;
+			if (name !== "earth") {
+				const normal = useLoader(
+					TextureLoader,
+					"/textures/" + props.texture +( quality+1) + "/nor.jpg"
+				);
+				const arm = useLoader(
+					TextureLoader,
+					"/textures/" + props.texture + (quality+1) + "/arm.jpg"
+				);
+				texture["normalMap"] = normal;
+				texture["roughnessMap"] = arm;
+				texture["metalnessMap"] = arm;
+				texture["aoMap"] = arm;
+			}
 		}
+
 		return (
 			<mesh
 				onClick={() => {
@@ -99,7 +105,26 @@ function Three() {
 				}} /> */}
 				<icosahedronGeometry args={[1, 128]} />
 				{/* <meshToonMaterial color={props.color} /> */}
-				<meshStandardMaterial {...texture} displacementScale={0.1} />
+				{!props.emmissive ? (
+					<meshStandardMaterial
+					{...texture}
+					displacementScale={0.1}
+				/>
+					
+				) : (
+					<><meshStandardMaterial
+						color={props.color}
+						emissive={props.emmissionColor}
+						emissiveIntensity={props.emmissionIntensity}
+					/>
+						
+						<pointLight
+							position={props.position}
+							decay={settings.emmissiveLightDecay}
+							intensity={props.emmissionIntensity*settings.emmissiveLightMultiplier}
+						/>
+					</>
+				)}
 			</mesh>
 		);
 	}
@@ -174,9 +199,11 @@ function Three() {
 	return (
 		<>
 			<Cam focus={focus} />
-			<ambientLight intensity={Math.PI / 2} />
-			{/* 
-			<spotLight
+			{
+				settings.ambientLight&&<ambientLight intensity={settings.ambientLightIntensity} />
+			}
+
+			{/* <spotLight
 				position={[10, 10, 10]}
 				angle={0.15}
 				penumbra={1}
@@ -184,12 +211,23 @@ function Three() {
 				intensity={Math.PI}
 			/>
 			<pointLight
-			
 				position={[-10, -10, -10]}
 				decay={0}
 				intensity={Math.PI}
 			/> */}
-			<directionalLight
+			{
+				settings.bloom && <EffectComposer>
+				<Bloom
+					mipmapBlur
+					luminanceThreshold={1}
+					levels={8}
+					intensity={settings.bloomIntensity}
+				/>
+				<ToneMapping />
+			</EffectComposer>
+			}
+
+			{/* <directionalLight
 				intensity={Math.PI}
 				position={[4, 0, 2]}
 				castShadow={true}
@@ -201,7 +239,7 @@ function Three() {
 				shadow-camera-bottom={2}
 				shadow-camera-near={0.1}
 				shadow-camera-far={7}
-			/>
+			/> */}
 
 			{bodies.map((body, index) => {
 				return (

@@ -8,10 +8,9 @@ import { Canvas } from "@react-three/fiber";
 import { svg } from "./vectors";
 import { useAtom } from "jotai";
 import {
-	bgAtom,
 	bgLoadedAtom,
-	bgQual,
 	findImportTime,
+	settingsAtom,
 	speedAtom,
 	store,
 	timeAtom,
@@ -32,8 +31,9 @@ function App() {
 	const [loaded] = useAtom(bgLoadedAtom);
 	const loader = useRef<HTMLDivElement>(null);
 	const timeRemaining = useRef<HTMLLabelElement>(null);
-	const [bg] = useAtom(bgAtom);
-	const [bgQ] = useAtom(bgQual);
+	const [settings] = useAtom(settingsAtom);
+	const bg = settings.background
+	const bgQ = settings.textureQuality
 	const [time] = useAtom(timeAtom);
 	useEffect(() => {
 		if(time<0)
@@ -88,7 +88,7 @@ function App() {
 								backgroundColor: "#09090b",
 							}}>
 							<Environment
-								files={"/" + bg + "" + bgQ + ".hdr"}
+								files={"/" + bg + "" + (bgQ+1) + ".hdr"}
 								background
 								environmentIntensity={1}
 							/>

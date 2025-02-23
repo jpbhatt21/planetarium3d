@@ -4,13 +4,9 @@ import {
 	bodiesAtom,
 	Body,
 	bodyRefAtom,
-	elasticitiyAtom,
-	forecastLimitAtom,
 	forecastRefAtom,
-	gravitationalConstantAtom,
+	settingsAtom,
 	store,
-	timeStepAtom,
-	trailLimitAtom,
 	trailRefAtom,
 } from "./atoms";
 import {
@@ -27,14 +23,16 @@ let G = 0;
 let dt = 10;
 let e = 1;
 let playing = false;
+let settings:any={}
 export function init(colorChange: boolean = false,force:boolean=false) {
 	let prevPlaying = !!playing;
-	trailLimit= store.get(trailLimitAtom);
+	trailLimit= settings.trailLimit
 	playing = false;
 	bodies = store.get(bodiesAtom);
-	G = store.get(gravitationalConstantAtom);
-	dt = store.get(timeStepAtom);
-	e = store.get(elasticitiyAtom);
+	settings=store.get(settingsAtom)
+	G = settings.gravitationalConstant
+	dt = settings.timeStep
+	e = settings.elasticitiy
 
 	if (!colorChange) {
 		trails = bodies.map((body) => {
@@ -43,7 +41,7 @@ export function init(colorChange: boolean = false,force:boolean=false) {
 		let tempBodies = [...bodies];
 		let temp = tempBodies.map((body) => [body]);
 
-		let forecastLimit = store.get(forecastLimitAtom);
+		let forecastLimit = settings.forecastLimit;
 		for (let i = 0; i < forecastLimit; i++) {
 			tempBodies = getNextBodyState(
 				tempBodies,
@@ -87,7 +85,7 @@ export function sleep(ms: number) {
 }
 async function setNextState() {
 	let latest = [] as Body[];
-	let forecastLimit = store.get(forecastLimitAtom);
+	let forecastLimit = settings.forecastLimit;
 	forecast = forecast.map((body) => {
 		latest.push(body[body.length - 1]);
 		return body;
@@ -157,6 +155,7 @@ export function playSimulation() {
 		getNextState().map((body, index) => {
 			if (bodyRefs.current[index]) {
 				bodyRefs.current[index].position.set(...body.position);
+				
 				if(body.radius!=initialRadii[index]){
 					// bodyRefs.current[index].geometry.dispose();
 					// bodyRefs.current[index].geometry = new THREE.SphereGeometry(
