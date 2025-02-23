@@ -48,13 +48,13 @@ function App() {
 			init = new Date().getTime();
 			loaderInterval = setInterval(() => {
 				if (loader.current) {
-					let perct = (new Date().getTime() - init) / (6 * time);
+					let perct = (new Date().getTime() - init) / (10 * time);
 					loader.current.style.width =
 						(perct >= 98 ? 98 : perct) + "%";
 					
 				}
 				if (timeRemaining.current) {
-					let timeLeft = time*0.6 - (new Date().getTime() - init) / 1000;
+					let timeLeft = time*1 - (new Date().getTime() - init) / 1000;
 					if (timeLeft > 0) {
 						timeRemaining.current.innerText =
 							"Time Remaining: " + timeLeft.toFixed(0) + "s";
