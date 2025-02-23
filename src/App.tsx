@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import AppSidebar from "./AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import Three from "./Three";
+import WebGL from 'three/addons/capabilities/WebGL.js';
+
 import "./App.css";
 import { Environment } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
@@ -30,9 +32,30 @@ fetch("/files/1mb.txt",{
 	con.log("Connection Speed: ", (speed/8).toFixed(2), "  MB/s (est.)");
 	con.log("Load Time: ", (findImportTime(1)*1000).toFixed(0), " ms (est.)");
 });
-
+const isWebGLAvailable = WebGL.isWebGL2Available();
 let loaderInterval: any = null;
 function App() {
+	if(!isWebGLAvailable){
+		return <div
+		className="fixed w-full flex flex-col pointer-events-none duration-200 transition-opacity  ease-linear gap-2 items-center justify-center h-full z-10 bg-background"
+		>
+		<div className=" flex overflow-hidden my-2 w-64 flex-row mts  ease-linear gap-2 text-xl justify-center items-center">
+			{svg.logo({
+				height: "50px",
+				width: "50px",
+			})}
+			<label className=" duration-200 text-3xl ease-linear">
+				{" "}
+				Planetarium
+			</label>
+			
+			{/* <label className=" tracking-wider"> Playground</label> */}
+		</div>
+		<label>WebGL support not found</label>
+			<label>Turn Hardware/GPU acceleration ON</label>
+			<label>or update/switch your browser</label>
+		</div>
+	}
 	const [open, setOpen] = useState(true);
 	const [conText]= useAtom(consoleText)
 	const cons = useRef<HTMLDivElement>(null);
