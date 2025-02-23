@@ -531,7 +531,7 @@ export const bgLoadedAtom = atom(false);
 export const bgAtom = atom("q");
 export const bgQual = atom("2");
 export const speedAtom = atom(1);
-export const timeAtom = atom(1);
+export const timeAtom = atom(-1);
 //Functions
 export function makeDefaultBody(props: object = {}): Body {
 	return {

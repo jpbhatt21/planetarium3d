@@ -18,7 +18,7 @@ import {
 } from "./atoms";
 let init: any = new Date().getTime();
 let init2: any = new Date().getTime();
-await fetch("/1mb.txt").then(() => {
+fetch("/1mb.txt").then(() => {
 	let now = new Date().getTime();
 	let diff = now - init2;
 	let speed = 1 / (diff / 1024);
@@ -36,6 +36,8 @@ function App() {
 	const [bgQ] = useAtom(bgQual);
 	const [time] = useAtom(timeAtom);
 	useEffect(() => {
+		if(time<0)
+			return
 		if (loaded) {
 			let now = new Date().getTime();
 			let diff = now - init;
@@ -63,6 +65,8 @@ function App() {
 			}, 100);
 		}
 	}, [loaded, time]);
+	if(time<0)
+		return <></>
 	return (
 		<>
 			<div className="fixed h-full w-full flex items-center justify-center text-white flex-col">
