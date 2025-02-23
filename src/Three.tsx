@@ -5,6 +5,7 @@ import {
 	Body,
 	bodyRefAtom,
 	colorChangerAtom,
+	con,
 	focusAtom,
 	forecastRefAtom,
 	loadPreset,
@@ -29,9 +30,10 @@ let bodies = [] as Body[];
 export function setBodies(b: Body[]) {
 	bodies = b;
 }
+let loadChange = true;
 let bfrefs = Array(bodies.length).fill(null);
 let prevPos = [0, 0, 0];
-
+let bodyLoaded = [] as boolean[];
 function Three() {
 	const [colorChange] = useAtom(colorChangerAtom);
 	useEffect(() => {
@@ -40,15 +42,20 @@ function Three() {
 	}, [colorChange]);
 	const [loaded, setLoaded] = useAtom(bgLoadedAtom);
 	const [settings] = useAtom(settingsAtom);
-	const quality = settings.textureQuality
+	const quality = settings.textureQuality;
 	const [playing, setPlaying] = useAtom(playingAtom);
 	const [focus, setFocus] = useAtom(focusAtom);
-
-	useEffect(() => {}, [quality]);
+	useEffect(() => {
+		if (!loaded && loadChange) {
+			bodyLoaded = Array.from({ length: bodies.length }, () => false);
+			loadChange = false;
+		}
+		if (loaded) loadChange = loaded;
+	}, [loaded]);
 	const [bodyRefs] = useAtom(bodyRefAtom);
 	const [trailRefs] = useAtom(trailRefAtom);
 	const [forecastRefs] = useAtom(forecastRefAtom);
-	console.log("render")
+	con.log("Refresh: Scene");
 	const camRef = useRef<OrbitControlsImpl>(null);
 	function renderSphere(
 		props: Body,
@@ -58,25 +65,31 @@ function Three() {
 	) {
 		const name = props.texture;
 		const texture = {} as any;
-		if(!props.emmissive){
+		if (!props.emmissive) {
 			const diff = useLoader(
 				TextureLoader,
-				"/textures/" + name + (name == "earth" ? "" : (quality+1)) + "/diff.jpg"
+				"/textures/" +
+					name +
+					(name == "earth" ? "" : quality + 1) +
+					"/diff.jpg"
 			);
 			const disp = useLoader(
 				TextureLoader,
-				"/textures/" + name + (name == "earth" ? "" : (quality+1)) + "/disp.jpg"
+				"/textures/" +
+					name +
+					(name == "earth" ? "" : quality + 1) +
+					"/disp.jpg"
 			);
 			texture["map"] = diff;
 			texture["displacementMap"] = disp;
 			if (name !== "earth") {
 				const normal = useLoader(
 					TextureLoader,
-					"/textures/" + props.texture +( quality+1) + "/nor.jpg"
+					"/textures/" + props.texture + (quality + 1) + "/nor.jpg"
 				);
 				const arm = useLoader(
 					TextureLoader,
-					"/textures/" + props.texture + (quality+1) + "/arm.jpg"
+					"/textures/" + props.texture + (quality + 1) + "/arm.jpg"
 				);
 				texture["normalMap"] = normal;
 				texture["roughnessMap"] = arm;
@@ -96,32 +109,35 @@ function Three() {
 				ref={(ref) => {
 					bodyRefs.current[index] = ref;
 					bfrefs[index] = ref;
+					if (bodyLoaded[index] ) return;
+					else {
+						con.log("Load: Body (" + props.name+")");
+						bodyLoaded[index] = true;
+					}
 				}}
 				scale={props.radius}
 				position={props.position}>
-				{/* <sphereGeometry args={[props.radius, 32, 32]} ref={(ref)=>{
-					radiusRefs.current[index]=ref
-
-				}} /> */}
 				<icosahedronGeometry args={[1, 128]} />
-				{/* <meshToonMaterial color={props.color} /> */}
 				{!props.emmissive ? (
 					<meshStandardMaterial
-					{...texture}
-					displacementScale={0.1}
-				/>
-					
-				) : (
-					<><meshStandardMaterial
-						color={props.color}
-						emissive={props.emmissionColor}
-						emissiveIntensity={props.emmissionIntensity}
+						{...texture}
+						displacementScale={0.1}
 					/>
-						
+				) : (
+					<>
+						<meshStandardMaterial
+							color={props.color}
+							emissive={props.emmissionColor}
+							emissiveIntensity={props.emmissionIntensity}
+						/>
+
 						<pointLight
 							position={props.position}
 							decay={settings.emmissiveLightDecay}
-							intensity={props.emmissionIntensity*settings.emmissiveLightMultiplier}
+							intensity={
+								props.emmissionIntensity *
+								settings.emmissiveLightMultiplier
+							}
 						/>
 					</>
 				)}
@@ -156,6 +172,7 @@ function Three() {
 							camRef.current = ref;
 							if (!loaded) {
 								setLoaded(true);
+								con.log("Load: Environment");
 							}
 							// console.log("in")
 						}}
@@ -199,9 +216,9 @@ function Three() {
 	return (
 		<>
 			<Cam focus={focus} />
-			{
-				settings.ambientLight&&<ambientLight intensity={settings.ambientLightIntensity} />
-			}
+			{settings.ambientLight && (
+				<ambientLight intensity={settings.ambientLightIntensity} />
+			)}
 
 			{/* <spotLight
 				position={[10, 10, 10]}
@@ -215,17 +232,17 @@ function Three() {
 				decay={0}
 				intensity={Math.PI}
 			/> */}
-			{
-				settings.bloom && <EffectComposer>
-				<Bloom
-					mipmapBlur
-					luminanceThreshold={1}
-					levels={8}
-					intensity={settings.bloomIntensity}
-				/>
-				<ToneMapping />
-			</EffectComposer>
-			}
+			{settings.bloom && (
+				<EffectComposer>
+					<Bloom
+						mipmapBlur
+						luminanceThreshold={1}
+						levels={8}
+						intensity={settings.bloomIntensity}
+					/>
+					<ToneMapping />
+				</EffectComposer>
+			)}
 
 			{/* <directionalLight
 				intensity={Math.PI}

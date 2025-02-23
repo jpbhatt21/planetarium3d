@@ -9,25 +9,42 @@ import { svg } from "./vectors";
 import { useAtom } from "jotai";
 import {
 	bgLoadedAtom,
+	CDN,
+	con,
+	consoleText,
 	findImportTime,
 	settingsAtom,
 	speedAtom,
 	store,
 	timeAtom,
 } from "./atoms";
+import { Textarea } from "./components/ui/textarea";
 let init: any = new Date().getTime();
 let init2: any = new Date().getTime();
-fetch("/1mb.txt").then(() => {
+fetch("/1mb.txt",{
+	cache: "no-store"
+}).then(() => {
 	let now = new Date().getTime();
 	let diff = now - init2;
 	let speed = 1 / (diff / 1024);
 	store.set(speedAtom, speed);
-	console.log("Download speed is ", speed, "Mb/s");
-	console.log("Expected load time is ", findImportTime(1), "s");
+	con.log("Connection Speed: ", (speed/8).toFixed(2), "  MB/s (est.)");
+	con.log("Load Time: ", (findImportTime(1)*1000).toFixed(0), " ms (est.)");
 });
+try{
+	fetch(CDN+"/1mb.txt").then(() => {
+		console.log("worked")
+	});
+
+}
+catch(e){
+	console.log("Failed")
+}
 let loaderInterval: any = null;
 function App() {
 	const [open, setOpen] = useState(true);
+	const [conText]= useAtom(consoleText)
+	const cons = useRef<HTMLDivElement>(null);
 	const [loaded] = useAtom(bgLoadedAtom);
 	const loader = useRef<HTMLDivElement>(null);
 	const timeRemaining = useRef<HTMLLabelElement>(null);
@@ -35,13 +52,20 @@ function App() {
 	const bg = settings.background
 	const bgQ = settings.textureQuality
 	const [time] = useAtom(timeAtom);
+	const [showConsole, setShowConsole] = useState(false);
+	useEffect(()=>{
+		if(cons.current){
+			cons.current.scrollTop = cons.current.scrollHeight
+		}
+	},[conText.length])
 	useEffect(() => {
+
 		if(time<0)
 			return
 		if (loaded) {
 			let now = new Date().getTime();
 			let diff = now - init;
-			console.log("Loading took ", diff, "ms");
+			con.log("Loading took ", diff, " ms");
 			clearInterval(loaderInterval);
 			if (loader.current) loader.current.style.width = "100%";
 		} else {
@@ -65,6 +89,14 @@ function App() {
 			}, 100);
 		}
 	}, [loaded, time]);
+	useEffect(() => {
+		window.addEventListener("keydown", (e) => {
+			if (e.key === "`") {
+				setShowConsole((prev) => !prev);
+			}
+		}
+		);
+	}, []);
 	if(time<0)
 		return <></>
 	return (
@@ -140,6 +172,29 @@ function App() {
 							</label>
 							<div className="w-full border"></div>
 						</div>
+					</div>
+					<div ref={cons} className="fixed flex flex-col z-20 bottom-2 right-2 w-96  overflow-y-scroll overflow-x-hidden outline rounded-sm p-2 max-h-80 resize-none bg-background"
+					style={{
+						opacity: showConsole ? 1 : 0,
+						pointerEvents: showConsole ? "all" : "none",
+						transition: "opacity 0.3s"
+					}}
+					>
+						
+							
+						{
+							conText.map((text, i) => (
+								
+								
+									<>
+									<div className="w-full flex items-center gap-1">
+									<label key={i} className="text-xs w-10 text-end text-muted-foreground">{text.split("|||")[0]}</label>
+									<Textarea value={text.split("|||")[1]} readOnly className="w-80 border-0 align-text-top resize-none min-h-fit max-h-fit cursor-default" /></div>
+									</>
+								
+							))
+						}
+
 					</div>
 				</SidebarProvider>
 			</div>

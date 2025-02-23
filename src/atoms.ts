@@ -481,6 +481,7 @@ export const textureSizes = [
 		psw: 37.4,
 	},
 ];
+export const CDN = "https://cdn.jpbhatt.tech";
 let previouslyLoaded = [] as string[];
 export function findImportTime(qual:number) {
 	let size = 0;
@@ -501,7 +502,7 @@ export function findImportTime(qual:number) {
 			previouslyLoaded.push(texture + qual);
 		}
 	});
-	console.log("Import size is ", size, "MB");
+	con.log("Fetch Size: ", size.toFixed(2), " MB");
 	store.set(timeAtom, Math.round((size * 8) / store.get(speedAtom)))
 	return Math.round((size * 8) / store.get(speedAtom));
 }
@@ -522,6 +523,26 @@ export const settingsAtom = atom({
 	emmissiveLightDecay:0.1,
 
 })
+export const consoleText = atom(["|||Welcome to Planetarium!"]);
+let prevLine={
+	content:"Welcome to Planetarium!",
+	count:1
+}
+export const con={
+	log:(...text:any)=>{
+		text = text.join("")
+		let conText = store.get(consoleText);
+		if(prevLine.content==text){
+			prevLine.count++
+			conText[conText.length-1]=new Date().toLocaleTimeString()+"|||" +prevLine.content+" ("+prevLine.count+")"
+		}
+		else{
+			prevLine={content:text,count:1}
+			conText.push(new Date().toLocaleTimeString()+"|||"+text)
+		}
+		store.set(consoleText,conText)
+	}
+}
 export const playingAtom = atom(false);
 export const store = createStore();
 export const bodiesAtom = atom([] as Body[]);

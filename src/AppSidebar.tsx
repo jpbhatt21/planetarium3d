@@ -788,9 +788,7 @@ function AppSidebar({ open }: { open: boolean }) {
 															let file =
 																e.clipboardData
 																	.files[0];
-															console.log(
-																file.type
-															);
+															
 															if (
 																file.type ==
 																"application/json"
@@ -1208,11 +1206,7 @@ function AppSidebar({ open }: { open: boolean }) {
 																					.target
 																					.value
 																			);
-																		console.log(
-																			e
-																				.target
-																				.value
-																		);
+																		
 																		let bodyRef =
 																			store.get(
 																				bodyRefAtom
@@ -1642,6 +1636,12 @@ function AppSidebar({ open }: { open: boolean }) {
 										className="w-full "
 										onClick={() => {
 											loadPreset(i);
+											findImportTime(
+												bgQ
+											);
+											setLoaded(
+												false
+											);
 										}}>
 										<label>{p.name}</label>
 									</SidebarMenuButton>
