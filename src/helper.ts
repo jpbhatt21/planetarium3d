@@ -1,27 +1,35 @@
-import { Vector3Tuple } from "three";
 import { Body } from "./atoms";
 
-function add(a: Vector3Tuple, b: Vector3Tuple): Vector3Tuple {
+function add(
+	a: [number, number, number],
+	b: [number, number, number]
+): [number, number, number] {
 	return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 }
 
-function subtract(a: Vector3Tuple, b: Vector3Tuple): Vector3Tuple {
+function subtract(
+	a: [number, number, number],
+	b: [number, number, number]
+): [number, number, number] {
 	return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 }
 
-function multiply(vec: Vector3Tuple, scalar: number): Vector3Tuple {
+function multiply(
+	vec: [number, number, number],
+	scalar: number
+): [number, number, number] {
 	return [vec[0] * scalar, vec[1] * scalar, vec[2] * scalar];
 }
 
-function dot(a: Vector3Tuple, b: Vector3Tuple): number {
+function dot(a: [number, number, number], b: [number, number, number]): number {
 	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-function magnitude(vec: Vector3Tuple): number {
+function magnitude(vec: [number, number, number]): number {
 	return Math.sqrt(dot(vec, vec));
 }
 
-function normalize(vec: Vector3Tuple): Vector3Tuple {
+function normalize(vec: [number, number, number]): [number, number, number] {
 	let mag = magnitude(vec);
 	return mag === 0 ? [0, 0, 0] : multiply(vec, 1 / mag);
 }
@@ -33,68 +41,7 @@ export const vec3 = {
 	magnitude,
 	normalize,
 };
-export function simulateGravity(bodies: Body[], G: number, dt: number): Body[] {
-	let accelerations: Vector3Tuple[] = Array.from(
-		{ length: bodies.length },
-		() => [0, 0, 0]
-	);
-	const newBodies: Body[] = bodies.map((body, index) => {
-		if (body.mass > 0) {
-			for (
-				let otherIndex = index + 1;
-				otherIndex < bodies.length;
-				otherIndex++
-			) {
-				let otherBody = bodies[otherIndex];
-				if (index !== otherIndex && otherBody.mass > 0) {
-					const distance = distanceBetween(
-						body.position,
-						otherBody.position
-					);
-					if (distance > 0.1) {
-						const force =
-							(G * body.mass * otherBody.mass) / distance ** 2;
-						const direction: Vector3Tuple = [
-							(otherBody.position[0] - body.position[0]) /
-								distance,
-							(otherBody.position[1] - body.position[1]) /
-								distance,
-							(otherBody.position[2] - body.position[2]) /
-								distance,
-						];
-						if (!body.static) {
-							accelerations[index] = vec3.add(
-								accelerations[index],
-								vec3.multiply(direction, force / body.mass)
-							);
-						}
-						if (!otherBody.static)
-							accelerations[otherIndex] = vec3.subtract(
-								accelerations[otherIndex],
-								vec3.multiply(direction, force / otherBody.mass)
-							);
-					}
-				}
-			}
-			if (body.static) return body;
-			return {
-				...body,
-				velocity: [
-					body.velocity[0] + accelerations[index][0] * dt,
-					body.velocity[1] + accelerations[index][1] * dt,
-					body.velocity[2] + accelerations[index][2] * dt,
-				],
-				position: [
-					body.position[0] + body.velocity[0] * dt,
-					body.position[1] + body.velocity[1] * dt,
-					body.position[2] + body.velocity[2] * dt,
-				],
-			};
-		}
-		return body;
-	});
-	return newBodies;
-}
+
 export function distanceBetween(
 	a: [number, number, number],
 	b: [number, number, number]
@@ -103,150 +50,11 @@ export function distanceBetween(
 		(a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
 	);
 }
-export function resolveSimultaneousCollisions(
-	bodies: Body[],
-	iterations: number,
-	e: number
-) {
-	let save = JSON.parse(JSON.stringify(bodies));
-
-	// We use a fixed number of iterations to approximate simultaneous resolution.
-	for (let iter = 0; iter < iterations; iter++) {
-		// Detect all collision contacts for this time step.
-		let contacts = [];
-		for (let i = 0; i < bodies.length; i++) {
-			if (bodies[i].mass == 0) continue;
-
-			for (let j = i + 1; j < bodies.length; j++) {
-				if (bodies[j].mass == 0) continue;
-				let A = bodies[i];
-				let B = bodies[j];
-				let n = vec3.subtract(A.position, B.position);
-				let dist = vec3.magnitude(n);
-				let penetration = A.radius + B.radius - dist;
-				if (penetration > 0) {
-					// Collision detected
-					let nHat = vec3.normalize(n);
-					contacts.push({ i, j, n: nHat, penetration, dist });
-				}
-			}
-		}
-
-		// Process each contact.
-		// Note: if a merge occurs, we break out and restart detection because the bodies array has changed.
-		let merged = false;
-		for (let contact of contacts) {
-			let A = bodies[contact.i];
-			let B = bodies[contact.j];
-			let nHat = contact.n;
-
-			// Correct positions so that the spheres just touch.
-			// Distribute the correction based on inverse mass.
-			let invMassSum = 1 / A.mass + 1 / B.mass;
-			let correction = vec3.multiply(
-				nHat,
-				contact.penetration / invMassSum
-			);
-			if (!A.static && !B.static) {
-				A.position = vec3.add(
-					A.position,
-					vec3.multiply(correction, 1 / A.mass)
-				);
-				B.position = vec3.subtract(
-					B.position,
-					vec3.multiply(correction, 1 / B.mass)
-				);
-			} else if (A.static && !B.static) {
-				B.position = vec3.subtract(
-					B.position,
-					vec3.multiply(correction, 1 / B.mass + 1 / A.mass)
-				);
-			} else if (!A.static && B.static) {
-				A.position = vec3.add(
-					A.position,
-					vec3.multiply(correction, 1 / A.mass + 1 / B.mass)
-				);
-			} else continue;
-
-			// Relative velocity along normal.
-			if (A.static) A.velocity = [0, 0, 0];
-			if (B.static) B.velocity = [0, 0, 0];
-			let relVel = vec3.subtract(A.velocity, B.velocity);
-			let relVelAlongNormal = vec3.dot(relVel, nHat);
-
-			// If bodies are separating, skip.
-			if (relVelAlongNormal > 0) continue;
-
-			// Compute impulse scalar:
-			let jImpulse = (-(1 + e) * relVelAlongNormal) / invMassSum;
-
-			// Update velocities.
-			let impulse = vec3.multiply(nHat, jImpulse);
-
-			if (!A.static && !B.static) {
-				A.velocity = vec3.add(
-					A.velocity,
-					vec3.multiply(impulse, 1 / A.mass)
-				);
-				B.velocity = vec3.subtract(
-					B.velocity,
-					vec3.multiply(impulse, 1 / B.mass)
-				);
-			} else if (A.static && !B.static) {
-				B.velocity = vec3.subtract(
-					B.velocity,
-					vec3.multiply(impulse, 1 / B.mass + 1 / A.mass)
-				);
-			} else if (!A.static && B.static) {
-				A.velocity = vec3.add(
-					A.velocity,
-					vec3.multiply(impulse, 1 / A.mass + 1 / B.mass)
-				);
-			} else continue;
-
-			let m1 = A.mass;
-			let m2 = B.mass;
-			let mul = 1;
-			if (m1 > m2) {
-				A.mass = m1 + m2 * (1 - e);
-				B.mass = m2 * e;
-				if (B.mass < 0.1 || B.radius < 0.1) {
-					A.mass += B.mass;
-					B.mass = 0;
-					mul = 0;
-				}
-				let aVolume = Math.pow(A.radius, 3);
-				let bVolume = Math.pow(B.radius, 3);
-				A.radius = Math.cbrt(aVolume + bVolume * (1 - e * mul));
-				B.radius = Math.cbrt(bVolume * e * mul);
-			} else {
-				B.mass = m2 + m1 * (1 - e);
-				A.mass = m1 * e;
-
-				if (A.mass < 0.1 || A.radius < 0.1) {
-					B.mass += A.mass;
-					A.mass = 0;
-					mul = 0;
-				}
-				let aVolume = Math.pow(A.radius, 3);
-				let bVolume = Math.pow(B.radius, 3);
-				B.radius = Math.cbrt(bVolume + aVolume * (1 - e * mul));
-				A.radius = Math.cbrt(aVolume * e * mul);
-			}
-		}
-		if (merged) {
-			iter--; // Restart detection
-			continue;
-		}
-	}
-	return save.map((body: Body, index: number) => {
-		if (body.static) {
-			return body;
-		}
-		return bodies[index];
-	});
-}
-export function newtonianGravity(A: Body, B: Body, G: number): Vector3Tuple {
+function newtonianGravity(
+	A: Body,
+	B: Body,
+	G: number
+): [number, number, number] {
 	const dx = B.position[0] - A.position[0];
 	const dy = B.position[1] - A.position[1];
 	const dz = B.position[2] - A.position[2];
@@ -258,10 +66,10 @@ export function newtonianGravity(A: Body, B: Body, G: number): Vector3Tuple {
 	return [(dx / r) * force, (dy / r) * force, (dz / r) * force];
 }
 interface CollisionResultBody {
-	deltaV: Vector3Tuple;
+	deltaV: [number, number, number];
 	deltaR: number;
 	deltaM: number;
-	deltaP: Vector3Tuple;
+	deltaP: [number, number, number];
 }
 interface CollisionResult {
 	A: CollisionResultBody;
@@ -269,16 +77,16 @@ interface CollisionResult {
 }
 const init = {
 	A: {
-		deltaV: [0, 0, 0] as Vector3Tuple,
+		deltaV: [0, 0, 0] as [number, number, number],
 		deltaR: 0,
 		deltaM: 0,
-		deltaP: [0, 0, 0] as Vector3Tuple,
+		deltaP: [0, 0, 0] as [number, number, number],
 	},
 	B: {
-		deltaV: [0, 0, 0] as Vector3Tuple,
+		deltaV: [0, 0, 0] as [number, number, number],
 		deltaR: 0,
 		deltaM: 0,
-		deltaP: [0, 0, 0] as Vector3Tuple,
+		deltaP: [0, 0, 0] as [number, number, number],
 	},
 };
 function calculateCollisionForce(A: Body, B: Body, e: number): CollisionResult {
@@ -287,11 +95,17 @@ function calculateCollisionForce(A: Body, B: Body, e: number): CollisionResult {
 	let nHat = vec3.normalize(n);
 	let penetration = A.radius + B.radius - dist;
 	let invMassSum = 1 / A.mass + 1 / B.mass;
+	let R = A.radius > B.radius ? A.radius : B.radius;
+	let r = R == B.radius ? A.radius : B.radius;
 	if (penetration > 0) {
 		let changes = JSON.parse(JSON.stringify(init));
 		let correction = vec3.multiply(nHat, penetration / invMassSum);
-		let aVel = A.static ? ([0, 0, 0] as Vector3Tuple) : A.velocity;
-		let bVel = B.static ? ([0, 0, 0] as Vector3Tuple) : B.velocity;
+		let aVel = A.static
+			? ([0, 0, 0] as [number, number, number])
+			: A.velocity;
+		let bVel = B.static
+			? ([0, 0, 0] as [number, number, number])
+			: B.velocity;
 		let relVel = vec3.subtract(aVel, bVel);
 		let relVelAlongNormal = vec3.dot(relVel, nHat);
 		if (relVelAlongNormal > 0) return JSON.parse(JSON.stringify(init));
@@ -318,30 +132,43 @@ function calculateCollisionForce(A: Body, B: Body, e: number): CollisionResult {
 
 		if (A.mass > B.mass) {
 			changes.A.deltaM = B.mass * (1 - e);
-			changes.B.deltaM = B.mass * (1 - e)
+			changes.B.deltaM = B.mass * (1 - e);
 			let aVolume = Math.pow(A.radius, 3);
 			let bVolume = Math.pow(B.radius, 3);
-			changes.A.deltaR=Math.cbrt(aVolume + bVolume * (1 - e))-A.radius ;
-			changes.B.deltaR=B.radius - Math.cbrt(bVolume * e );
-			if(B.mass-changes.B.deltaM<0.001||B.radius-changes.B.deltaR<0.001){
-				changes.A.deltaM=B.mass;
-				changes.B.deltaM=B.mass;
-				changes.A.deltaR=Math.cbrt(aVolume + bVolume)-A.radius
-				changes.B.deltaR=B.radius
-				
+			changes.A.deltaR =
+				Math.cbrt(aVolume + bVolume * (1 - e)) - A.radius;
+			changes.B.deltaR = B.radius - Math.cbrt(bVolume * e);
+			if (
+				B.mass - changes.B.deltaM < 0.001 ||
+				B.radius - changes.B.deltaR < 0.001 ||
+				dist <= R - r
+			) {
+				changes.A.deltaP = [0, 0, 0];
+				changes.A.deltaV = vec3.multiply(impulse, invMassSum);
+				changes.A.deltaM = B.mass;
+				changes.B.deltaM = B.mass;
+				changes.A.deltaR = Math.cbrt(aVolume + bVolume) - A.radius;
+				changes.B.deltaR = B.radius;
 			}
 		} else {
-			changes.B.deltaM =-A.mass * (1 - e);
-			changes.A.deltaM =-A.mass * (1 - e);
+			changes.B.deltaM = -A.mass * (1 - e);
+			changes.A.deltaM = -A.mass * (1 - e);
 			let aVolume = Math.pow(A.radius, 3);
 			let bVolume = Math.pow(B.radius, 3);
-			changes.B.deltaR=-Math.cbrt(bVolume + aVolume * (1 - e))+B.radius ;
-			changes.A.deltaR=-A.radius + Math.cbrt(aVolume * e );
-			if(A.mass-changes.A.deltaM<0.001||A.radius+changes.A.deltaR<0.001){
-				changes.B.deltaM=-A.mass;
-				changes.A.deltaM=-A.mass;
-				changes.B.deltaR=-Math.cbrt(bVolume + aVolume)+B.radius
-				changes.A.deltaR=-A.radius
+			changes.B.deltaR =
+				-Math.cbrt(bVolume + aVolume * (1 - e)) + B.radius;
+			changes.A.deltaR = -A.radius + Math.cbrt(aVolume * e);
+			if (
+				A.mass - changes.A.deltaM < 0.001 ||
+				A.radius + changes.A.deltaR < 0.001 ||
+				dist <= R - r
+			) {
+				changes.B.deltaP = [0, 0, 0];
+				changes.B.deltaV = vec3.multiply(impulse, invMassSum);
+				changes.B.deltaM = -A.mass;
+				changes.A.deltaM = -A.mass;
+				changes.B.deltaR = -Math.cbrt(bVolume + aVolume) + B.radius;
+				changes.A.deltaR = -A.radius;
 			}
 		}
 		return changes;
@@ -353,7 +180,7 @@ export function getNextBodyState(
 	dt: number,
 	e: number
 ): Body[] {
-	let forces: Vector3Tuple[] = bodies.map(() => [0, 0, 0]);
+	let forces: [number, number, number][] = bodies.map(() => [0, 0, 0]);
 	for (let i = 0; i < bodies.length; i++) {
 		let A = bodies[i];
 		if (A.mass == 0) continue;
@@ -383,30 +210,29 @@ export function getNextBodyState(
 			let changePair = calculateCollisionForce(A, B, e);
 			changes[i] = {
 				deltaV: vec3.add(changes[i].deltaV, changePair.A.deltaV),
-				deltaR: changes[i].deltaR+changePair.A.deltaR,
-				deltaM: changes[i].deltaM+changePair.A.deltaM,
+				deltaR: changes[i].deltaR + changePair.A.deltaR,
+				deltaM: changes[i].deltaM + changePair.A.deltaM,
 				deltaP: vec3.add(changes[i].deltaP, changePair.A.deltaP),
 			};
 			changes[j] = {
 				deltaV: vec3.subtract(changes[j].deltaV, changePair.B.deltaV),
-				deltaR: changes[j].deltaR-changePair.B.deltaR,
-				deltaM: changes[j].deltaM-changePair.B.deltaM,
+				deltaR: changes[j].deltaR - changePair.B.deltaR,
+				deltaM: changes[j].deltaM - changePair.B.deltaM,
 				deltaP: vec3.subtract(changes[j].deltaP, changePair.B.deltaP),
 			};
 		}
 	}
-	
 
 	return bodies.map((body, index) => {
 		let change = changes[index];
 		let velocity = vec3.add(body.velocity, change.deltaV);
 		let position = vec3.add(body.position, change.deltaP);
 		let mass = body.mass + change.deltaM;
-		let sttic =body.static
-		if(mass==0){
-			sttic=true
+		let sttic = body.static;
+		if (mass == 0) {
+			sttic = true;
 		}
 		let radius = body.radius + change.deltaR;
-		return { ...body, velocity, position, mass, radius,static:sttic };
+		return { ...body, velocity, position, mass, radius, static: sttic };
 	});
 }

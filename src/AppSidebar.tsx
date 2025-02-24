@@ -34,6 +34,7 @@ import {
 	focusAtom,
 	loadPreset,
 	planetTextures,
+	playingAtom,
 	preset,
 	settingsAtom,
 	store,
@@ -60,6 +61,7 @@ import {
 } from "./components/ui/alert-dialog";
 import { Textarea } from "./components/ui/textarea";
 import { Slider } from "./components/ui/slider";
+import { vec3 } from "./helper";
 let change: any = null;
 const spaces = ["Universal Settings", "Bodies", "Presets"];
 const separator = (
@@ -80,6 +82,7 @@ function AppSidebar({ open }: { open: boolean }) {
 	const [space, setSpace] = useState(0);
 	const [anchor, setAnchor] = useAtom(focusAtom);
 	const [bodies, setBodies] = useAtom(bodiesAtom);
+
 	const [openArr, setOpenArr] = useState(Array(bodies.length).fill(true));
 	const [settings, setSettings] = useAtom(settingsAtom);
 	function setSettingsItem(key: string, value: any) {
@@ -88,6 +91,7 @@ function AppSidebar({ open }: { open: boolean }) {
 		});
 		init();
 	}
+	const [playing] = useAtom(playingAtom);
 	const G = settings.gravitationalConstant;
 	const DT = settings.timeStep;
 	const E = settings.elasticitiy;
@@ -95,8 +99,8 @@ function AppSidebar({ open }: { open: boolean }) {
 	const trailLimit = settings.trailLimit;
 	const bg = settings.background;
 	const bgQ = settings.textureQuality;
-	const [_, setColorChange] = useAtom(colorChangerAtom);
-	const [__, setLoaded] = useAtom(bgLoadedAtom);
+	const [__, setColorChange] = useAtom(colorChangerAtom);
+	const [___, setLoaded] = useAtom(bgLoadedAtom);
 
 	const [gRef, dtRef, eRef, foreRef, trailRef] = [
 		useRef<HTMLInputElement>(null),
@@ -458,7 +462,7 @@ function AppSidebar({ open }: { open: boolean }) {
 															"background",
 															p.code
 														);
-														findImportTime(bgQ);
+														findImportTime();
 														setLoaded(false);
 													}}
 													style={{
@@ -788,7 +792,7 @@ function AppSidebar({ open }: { open: boolean }) {
 															let file =
 																e.clipboardData
 																	.files[0];
-															
+
 															if (
 																file.type ==
 																"application/json"
@@ -929,609 +933,901 @@ function AppSidebar({ open }: { open: boolean }) {
 					<SidebarMenu className="w-full pr-2 pb-4 overflow-y-auto ">
 						{bodies.map((body, index) => (
 							<>
-							<Collapsible
-								key={index}
-								open={openArr[index]}
-								onOpenChange={(isOpen) =>
-									setOpenArr((prev) => {
-										let temp = [...prev];
-										temp[index] = isOpen;
-										return temp;
-									})
-								}>
-								<SidebarMenuItem className="flex flex-col">
-									<div className="w-full flex justify-between  items-center text-start">
-										<Input
-											type="text"
-											value={body.name}
-											className="  focus-within:cursor-text "
-											style={{
-												outline: "none",
-												border: "none",
-												boxShadow: "none",
-											}}
-											id={"nameInput" + index}
-											onClick={() => {
-												// e.currentTarget.blur();
-											}}
-											onChange={(e) => {
-												setBodies((prev) => {
-													let temp = [...prev];
-													temp[index].name =
-														e.target.value;
-													return temp;
-												});
-											}}
-										/>
-										<div className="flex items-center gap-1">
-											<SidebarMenuButton
-												className=" items-center justify-center w-5 h-5"
-												onClick={(e) => {
-													e.preventDefault();
-													//dupe
-												}}>
-												<Copy className=" text-nord-aurora-green scale-75" />
-											</SidebarMenuButton>
-											<SidebarMenuButton
-												className="w-5 h-5  items-center justify-center "
-												onClick={(e) => {
-													e.preventDefault();
-													//delete
-												}}>
-												<Delete className=" text-nord-aurora-red scale-90" />
-											</SidebarMenuButton>
-											<SidebarMenuButton
-												className="w-5 h-5  items-center justify-center "
+								<Collapsible
+									key={index}
+									open={openArr[index]}
+									onOpenChange={(isOpen) =>
+										setOpenArr((prev) => {
+											let temp = [...prev];
+											temp[index] = isOpen;
+											return temp;
+										})
+									}>
+									<SidebarMenuItem className="flex flex-col">
+										<div className="w-full flex justify-between  items-center text-start">
+											<Input
+												type="text"
+												value={body.name}
+												className="  focus-within:cursor-text "
+												style={{
+													outline: "none",
+													border: "none",
+													boxShadow: "none",
+												}}
+												id={"nameInput" + index}
 												onClick={() => {
-													setOpenArr((prev) => {
+													// e.currentTarget.blur();
+												}}
+												onChange={(e) => {
+													setBodies((prev) => {
 														let temp = [...prev];
-														temp[index] =
-															!temp[index];
+														temp[index].name =
+															e.target.value;
 														return temp;
 													});
-												}}>
-												<ChevronDown
-													className=" scale-75 duration-200"
-													style={{
-														transform: openArr[
-															index
-														]
-															? "rotate(-180deg)"
-															: "rotate(-90deg)",
-													}}
-												/>
-											</SidebarMenuButton>
+													init();
+												}}
+											/>
+											<div className="flex items-center gap-1">
+												<SidebarMenuButton
+													className=" items-center justify-center w-5 h-5"
+													onClick={(e) => {
+														e.preventDefault();
+														//dupe
+														setBodies((prev) => {
+															let temp = [
+																...prev,
+															];
+															let body =
+																JSON.parse(
+																	JSON.stringify(
+																		temp[
+																			index
+																		]
+																	)
+																);
+															let counter = 1;
+															let rands = [
+																[-1, -1, -1],
+																[-1, -1, 1],
+																[-1, 1, -1],
+																[-1, 1, 1],
+																[1, -1, -1],
+																[1, -1, 1],
+																[1, 1, -1],
+																[1, 1, 1],
+															];
+															let rand =
+																rands.splice(
+																	Math.floor(
+																		Math.random() *
+																			rands.length
+																	),
+																	1
+																)[0];
+															body.position[0] +=
+																body.radius *
+																2 *
+																rand[0];
+															body.position[1] +=
+																body.radius *
+																2 *
+																rand[1];
+															body.position[2] +=
+																body.radius *
+																2 *
+																rand[2];
+															while (
+																prev.find(
+																	(x) =>
+																		x.name ==
+																		body.name +
+																			" (" +
+																			counter +
+																			")"
+																)
+															) {
+																counter++;
+															}
+															body.name +=
+																" (" + counter + ")";
+															while (
+																prev.find(
+																	(x) =>
+																		x
+																			.position[0] ==
+																			body
+																				.position[0] &&
+																		x
+																			.position[1] ==
+																			body
+																				.position[1] &&
+																		x
+																			.position[2] ==
+																			body
+																				.position[2]
+																)
+															) {
+																if (
+																	rands.length >
+																	0
+																) {
+																	rand =
+																		rands.splice(
+																			Math.floor(
+																				Math.random() *
+																					rands.length
+																			),
+																			1
+																		)[0];
+																	body.position[0] +=
+																		body.radius *
+																		2 *
+																		rand[0];
+																	body.position[1] +=
+																		body.radius *
+																		2 *
+																		rand[1];
+																	body.position[2] +=
+																		body.radius *
+																		2 *
+																		rand[2];
+																} else
+																	body.position =
+																		[
+																			...vec3.add(
+																				body.position,
+																				[
+																					body.radius,
+																					body.radius,
+																					body.radius,
+																				]
+																			),
+																		];
+															}
+															temp.splice(
+																index + 1,
+																0,
+																body
+															);
+															return temp;
+														});
+														init();
+													}}>
+													<Copy className=" text-nord-aurora-green scale-75" />
+												</SidebarMenuButton>
+												<SidebarMenuButton
+													className="w-5 h-5  items-center justify-center "
+													onClick={(e) => {
+														e.preventDefault();
+														//delete
+
+														setBodies((prev) => {
+															let temp = [
+																...prev,
+															];
+															temp.splice(
+																index,
+																1
+															);
+															return temp;
+														});
+														setAnchor((prev) => {
+															if (prev == index) {
+																return -1;
+															} else if (
+																prev > index
+															) {
+																return prev - 1;
+															}
+															return prev;
+														});
+														init();
+													}}>
+													<Delete className=" text-nord-aurora-red scale-90" />
+												</SidebarMenuButton>
+												<SidebarMenuButton
+													className="w-5 h-5  items-center justify-center "
+													onClick={() => {
+														setOpenArr((prev) => {
+															let temp = [
+																...prev,
+															];
+															temp[index] =
+																!temp[index];
+															return temp;
+														});
+													}}>
+													<ChevronDown
+														className=" scale-75 duration-200"
+														style={{
+															transform: openArr[
+																index
+															]
+																? "rotate(-180deg)"
+																: "rotate(-90deg)",
+														}}
+													/>
+												</SidebarMenuButton>
+											</div>
 										</div>
-									</div>
-									<CollapsibleContent>
-										<SidebarMenuSub>
-											<SidebarMenuSubItem className="w-full flex justify-between  items-center text-start">
-												<label>Mass</label>
-												<Input
-													type="number"
-													className="text-end"
-													value={body.mass}
-													onChange={(e) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[index].mass =
-																parseFloat(
-																	e.target
-																		.value
-																);
-															return temp;
-														});
-														init();
-													}}
-												/>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex justify-between  items-center text-start">
-												<label>Radius</label>
-												<Input
-													type="number"
-													className="text-end"
-													value={body.radius}
-													onChange={(e) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[index].radius =
-																parseFloat(
-																	e.target
-																		.value
-																);
+										<CollapsibleContent>
+											<SidebarMenuSub>
+												<SidebarMenuSubItem className="w-full  flex justify-between  items-center text-start">
+													<label>Mass</label>
+													<Input
+														type="number"
+														disabled={playing}
+														className="text-end"
+														value={body.mass}
+														onChange={(e) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].mass =
+																		parseFloat(
+																			e
+																				.target
+																				.value
+																		);
+																	return temp;
+																}
+															);
+															init();
+														}}
+													/>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex justify-between  items-center text-start">
+													<label>Radius</label>
+													<Input
+														type="number"
+														disabled={playing}
+														className="text-end"
+														value={body.radius}
+														onChange={(e) => {
+															if (playing) return;
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].radius =
+																		parseFloat(
+																			e
+																				.target
+																				.value
+																		);
 
-															return temp;
-														});
-														setColorChange(
-															"#" +
-																Math.floor(
-																	Math.random() *
-																		16777215
-																).toString(16)
-														);
-														init();
-													}}
-												/>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex flex-col justify-between text-start">
-												<label>Position</label>
-												<div className="flex gap-1 flex-col">
-													<div className="flex text-xs gap-1 text-muted-foreground ">
-														<label className="w-1/3 text-center">
-															x
-														</label>
-														<label className="w-1/3 text-center">
-															y
-														</label>
-														<label className="w-1/3 text-center">
-															z
-														</label>
-													</div>
-													<div className="flex gap-1">
-														<Input
-															type="number"
-															className="text-end"
-															value={
-																body.position[0]
-															}
-															step={
-																body.radius / 10
-															}
-															onChange={(e) => {
-																setBodies(
-																	(prev) => {
-																		let temp =
-																			[
-																				...prev,
-																			];
-																		temp[
-																			index
-																		].position[0] =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		let bodyRef =
-																			store.get(
-																				bodyRefAtom
-																			);
-																		let pos =
-																			bodyRef
-																				.current[
+																	return temp;
+																}
+															);
+															setColorChange(
+																"#" +
+																	Math.floor(
+																		Math.random() *
+																			16777215
+																	).toString(
+																		16
+																	)
+															);
+															init();
+														}}
+													/>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex flex-col justify-between text-start">
+													<label>Position</label>
+													<div className="flex gap-1 flex-col">
+														<div className="flex text-xs gap-1 text-muted-foreground ">
+															<label className="w-1/3 text-center">
+																x
+															</label>
+															<label className="w-1/3 text-center">
+																y
+															</label>
+															<label className="w-1/3 text-center">
+																z
+															</label>
+														</div>
+														<div className="flex gap-1">
+															<Input
+																type="number"
+																disabled={
+																	playing
+																}
+																className="text-end"
+																value={
+																	body
+																		.position[0]
+																}
+																step={
+																	body.radius /
+																	10
+																}
+																onChange={(
+																	e
+																) => {
+																	if (playing)
+																		return;
+																	setBodies(
+																		(
+																			prev
+																		) => {
+																			let temp =
+																				[
+																					...prev,
+																				];
+																			temp[
 																				index
-																			]
-																				.position;
-																		pos.x =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		bodyRef.current[
-																			index
-																		].position.set(
-																			...[
-																				pos.x,
-																				pos.y,
-																				pos.z,
-																			]
-																		);
-																		return temp;
-																	}
-																);
-																init();
-															}}
-														/>
-														<Input
-															type="number"
-															className="text-end"
-															value={
-																body.position[1]
-															}
-															step={
-																body.radius / 10
-															}
-															onChange={(e) => {
-																setBodies(
-																	(prev) => {
-																		let temp =
-																			[
-																				...prev,
-																			];
-																		temp[
-																			index
-																		].position[1] =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		let bodyRef =
-																			store.get(
-																				bodyRefAtom
-																			);
-																		let pos =
-																			bodyRef
-																				.current[
-																				index
-																			]
-																				.position;
-																		pos.y =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		bodyRef.current[
-																			index
-																		].position.set(
-																			...[
-																				pos.x,
-																				pos.y,
-																				pos.z,
-																			]
-																		);
-																		return temp;
-																	}
-																);
-																init();
-															}}
-														/>
-														<Input
-															type="number"
-															className="text-end"
-															value={
-																body.position[2]
-															}
-															step={
-																body.radius / 10
-															}
-															onChange={(e) => {
-																setBodies(
-																	(prev) => {
-																		let temp =
-																			[
-																				...prev,
-																			];
-																		temp[
-																			index
-																		].position[2] =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		
-																		let bodyRef =
-																			store.get(
-																				bodyRefAtom
-																			);
-																		let pos =
-																			bodyRef
-																				.current[
-																				index
-																			]
-																				.position;
-																		pos.z =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		bodyRef.current[
-																			index
-																		].position.set(
-																			...[
-																				pos.x,
-																				pos.y,
-																				pos.z,
-																			]
-																		);
-																		return temp;
-																	}
-																);
-																init();
-															}}
-														/>
-													</div>
-												</div>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex flex-col justify-between text-start">
-												<label>Velocity</label>
-												<div className="flex gap-1 flex-col">
-													<div className="flex text-xs gap-1 text-muted-foreground ">
-														<label className="w-1/3 text-center">
-															x
-														</label>
-														<label className="w-1/3 text-center">
-															y
-														</label>
-														<label className="w-1/3 text-center">
-															z
-														</label>
-													</div>
-													<div className="flex gap-1">
-														<Input
-															type="number"
-															className="text-end"
-															value={
-																body.velocity[0]
-															}
-															step={0.1}
-															onChange={(e) => {
-																setBodies(
-																	(prev) => {
-																		let temp =
-																			[
-																				...prev,
-																			];
-																		temp[
-																			index
-																		].velocity[0] =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		return temp;
-																	}
-																);
-																init();
-															}}
-														/>
-														<Input
-															type="number"
-															className="text-end"
-															value={
-																body.velocity[1]
-															}
-															step={0.1}
-															onChange={(e) => {
-																setBodies(
-																	(prev) => {
-																		let temp =
-																			[
-																				...prev,
-																			];
-																		temp[
-																			index
-																		].velocity[1] =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		return temp;
-																	}
-																);
-																init();
-															}}
-														/>
-														<Input
-															type="number"
-															className="text-end"
-															step={0.1}
-															value={
-																body.velocity[2]
-															}
-															onChange={(e) => {
-																setBodies(
-																	(prev) => {
-																		let temp =
-																			[
-																				...prev,
-																			];
-																		temp[
-																			index
-																		].velocity[2] =
-																			parseFloat(
-																				e
-																					.target
-																					.value
-																			);
-																		return temp;
-																	}
-																);
-																init();
-															}}
-														/>
-													</div>
-												</div>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center my-2 justify-between text-start">
-												<label>Satic Body</label>
-												<Checkbox
-													checked={body.static}
-													onCheckedChange={(
-														checked: boolean
-													) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[index].static =
-																checked;
-															return temp;
-														});
-														init();
-													}}
-												/>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center  my-2 justify-between text-start">
-												<label>Emmissive</label>
-												<Checkbox
-													checked={body.emmissive}
-													onCheckedChange={(
-														checked: boolean
-													) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[
-																index
-															].emmissive =
-																checked;
-															return temp;
-														});
-														setColorChange(
-															"#ee1"+index+""+checked
-														);
-													}}
-												/>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center  mb-1 justify-between text-start">
-												<label>Texture</label>
-												<DropdownMenu>
-													<div className="w-1/2 flex items-center">
-														<DropdownMenuTrigger
-															className="w-full"
-															asChild>
-															<SidebarMenuButton className="w-full  ">
-																<label className="w-full  text-end">
-																	{planetTextures.map(
-																		(p) => {
-																			return p.key ==
-																				body.texture
-																				? p.name
-																				: "";
-																		}
-																	)}
-																</label>
-															</SidebarMenuButton>
-														</DropdownMenuTrigger>
-													</div>
-													<DropdownMenuContent className="w-[10rem]">
-														{planetTextures.map(
-															(p) => (
-																<DropdownMenuItem
-																	onClick={() => {
-																		setBodies(
-																			(
-																				prev
-																			) => {
-																				let temp =
-																					[
-																						...prev,
-																					];
-																				temp[
+																			].position[0] =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			let bodyRef =
+																				store.get(
+																					bodyRefAtom
+																				);
+																			let pos =
+																				bodyRef
+																					.current[
 																					index
-																				].texture =
-																					p.key;
-																				return temp;
-																			}
-																		);
-																		setColorChange(
-																			"#" +
-																				Math.floor(
-																					Math.random() *
-																						16777215
-																				).toString(
-																					16
-																				)
-																		);
-																		findImportTime(
-																			bgQ
-																		);
+																				]
+																					.position;
+																			pos.x =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			bodyRef.current[
+																				index
+																			].position.set(
+																				...[
+																					pos.x,
+																					pos.y,
+																					pos.z,
+																				]
+																			);
+																			return temp;
+																		}
+																	);
+																	init();
+																}}
+															/>
+															<Input
+																type="number"
+																disabled={
+																	playing
+																}
+																className="text-end"
+																value={
+																	body
+																		.position[1]
+																}
+																step={
+																	body.radius /
+																	10
+																}
+																onChange={(
+																	e
+																) => {
+																	if (playing)
+																		return;
+																	setBodies(
+																		(
+																			prev
+																		) => {
+																			let temp =
+																				[
+																					...prev,
+																				];
+																			temp[
+																				index
+																			].position[1] =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			let bodyRef =
+																				store.get(
+																					bodyRefAtom
+																				);
+																			let pos =
+																				bodyRef
+																					.current[
+																					index
+																				]
+																					.position;
+																			pos.y =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			bodyRef.current[
+																				index
+																			].position.set(
+																				...[
+																					pos.x,
+																					pos.y,
+																					pos.z,
+																				]
+																			);
+																			return temp;
+																		}
+																	);
+																	init();
+																}}
+															/>
+															<Input
+																type="number"
+																disabled={
+																	playing
+																}
+																className="text-end"
+																value={
+																	body
+																		.position[2]
+																}
+																step={
+																	body.radius /
+																	10
+																}
+																onChange={(
+																	e
+																) => {
+																	if (playing)
+																		return;
+																	setBodies(
+																		(
+																			prev
+																		) => {
+																			let temp =
+																				[
+																					...prev,
+																				];
+																			temp[
+																				index
+																			].position[2] =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
 
-																		setLoaded(
-																			false
-																		);
-																	}}>
-																	<span>
-																		{p.name}
-																	</span>
-																</DropdownMenuItem>
-															)
-														)}
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
-												<label>Color</label>
-												<Input
-													type="color"
-													className="w-[7rem]"
-													value={body.color}
-													onFocus={() =>
-														setColorChange("#0")
-													}
-													onChange={(e) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[index].color =
-																e.target.value;
-															return temp;
-														});
-														setColorChange(
-															e.target.value
-														);
-													}}
-												/>
-											</SidebarMenuSubItem>
-											
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
-												<label>Emmission Color</label>
-												<Input
-													type="color"
-													className="w-[7rem]"
-													value={body.emmissionColor}
-													onFocus={() =>
-														setColorChange("#0")
-													}
-													onChange={(e) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[
-																index
-															].emmissionColor =
-																e.target.value;
-															return temp;
-														});
-														setColorChange(
-															"ee2"+index+""+e.target.value
-														);
-													}}
-												/>
-											</SidebarMenuSubItem>
-											
-											
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
-												<label>Trail Color</label>
-												<Input
-													type="color"
-													className="w-[7rem]"
-													value={body.trailColor}
-													onFocus={() =>
-														setColorChange("#0")
-													}
-													onChange={(e) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[
-																index
-															].trailColor =
-																e.target.value;
-															return temp;
-														});
-														setColorChange(
-															e.target.value
-														);
-													}}
-												/>
-											</SidebarMenuSubItem>
-											{/* <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+																			let bodyRef =
+																				store.get(
+																					bodyRefAtom
+																				);
+																			let pos =
+																				bodyRef
+																					.current[
+																					index
+																				]
+																					.position;
+																			pos.z =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			bodyRef.current[
+																				index
+																			].position.set(
+																				...[
+																					pos.x,
+																					pos.y,
+																					pos.z,
+																				]
+																			);
+																			return temp;
+																		}
+																	);
+																	init();
+																}}
+															/>
+														</div>
+													</div>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex flex-col justify-between text-start">
+													<label>Velocity</label>
+													<div className="flex gap-1 flex-col">
+														<div className="flex text-xs gap-1 text-muted-foreground ">
+															<label className="w-1/3 text-center">
+																x
+															</label>
+															<label className="w-1/3 text-center">
+																y
+															</label>
+															<label className="w-1/3 text-center">
+																z
+															</label>
+														</div>
+														<div className="flex gap-1">
+															<Input
+																type="number"
+																className="text-end"
+																disabled={
+																	playing
+																}
+																value={
+																	body
+																		.velocity[0]
+																}
+																step={0.1}
+																onChange={(
+																	e
+																) => {
+																	if (playing)
+																		return;
+																	setBodies(
+																		(
+																			prev
+																		) => {
+																			let temp =
+																				[
+																					...prev,
+																				];
+																			temp[
+																				index
+																			].velocity[0] =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			return temp;
+																		}
+																	);
+																	init();
+																}}
+															/>
+															<Input
+																type="number"
+																disabled={
+																	playing
+																}
+																className="text-end"
+																value={
+																	body
+																		.velocity[1]
+																}
+																step={0.1}
+																onChange={(
+																	e
+																) => {
+																	if (playing)
+																		return;
+																	setBodies(
+																		(
+																			prev
+																		) => {
+																			let temp =
+																				[
+																					...prev,
+																				];
+																			temp[
+																				index
+																			].velocity[1] =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			return temp;
+																		}
+																	);
+																	init();
+																}}
+															/>
+															<Input
+																type="number"
+																disabled={
+																	playing
+																}
+																className="text-end"
+																step={0.1}
+																value={
+																	body
+																		.velocity[2]
+																}
+																onChange={(
+																	e
+																) => {
+																	if (playing)
+																		return;
+																	setBodies(
+																		(
+																			prev
+																		) => {
+																			let temp =
+																				[
+																					...prev,
+																				];
+																			temp[
+																				index
+																			].velocity[2] =
+																				parseFloat(
+																					e
+																						.target
+																						.value
+																				);
+																			return temp;
+																		}
+																	);
+																	init();
+																}}
+															/>
+														</div>
+													</div>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex items-center my-2 justify-between text-start">
+													<label>Satic Body</label>
+													<Checkbox
+														checked={body.static}
+														onCheckedChange={(
+															checked: boolean
+														) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].static =
+																		checked;
+																	return temp;
+																}
+															);
+															init();
+														}}
+													/>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex items-center  my-2 justify-between text-start">
+													<label>Emmissive</label>
+													<Checkbox
+														checked={body.emmissive}
+														onCheckedChange={(
+															checked: boolean
+														) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].emmissive =
+																		checked;
+
+																	return temp;
+																}
+															);
+															setColorChange(
+																"#ee1" +
+																	index +
+																	"" +
+																	checked
+															);
+															init();
+														}}
+													/>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex items-center  mb-1 justify-between text-start">
+													<label>Texture</label>
+													<DropdownMenu>
+														<div className="w-1/2 flex items-center">
+															<DropdownMenuTrigger
+																className="w-full"
+																asChild>
+																<SidebarMenuButton className="w-full  ">
+																	<label className="w-full  text-end">
+																		{planetTextures.map(
+																			(
+																				p
+																			) => {
+																				return p.key ==
+																					body.texture
+																					? p.name
+																					: "";
+																			}
+																		)}
+																	</label>
+																</SidebarMenuButton>
+															</DropdownMenuTrigger>
+														</div>
+														<DropdownMenuContent className="w-[10rem]">
+															{planetTextures.map(
+																(p) => (
+																	<DropdownMenuItem
+																		onClick={() => {
+																			setBodies(
+																				(
+																					prev
+																				) => {
+																					let temp =
+																						[
+																							...prev,
+																						];
+																					temp[
+																						index
+																					].texture =
+																						p.key;
+																					return temp;
+																				}
+																			);
+
+																			setColorChange(
+																				"#" +
+																					Math.floor(
+																						Math.random() *
+																							16777215
+																					).toString(
+																						16
+																					)
+																			);
+																			findImportTime();
+
+																			findImportTime();
+																			setLoaded(
+																				false
+																			);
+																			init();
+																		}}>
+																		<span>
+																			{
+																				p.name
+																			}
+																		</span>
+																	</DropdownMenuItem>
+																)
+															)}
+														</DropdownMenuContent>
+													</DropdownMenu>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+													<label>Color</label>
+													<Input
+														type="color"
+														className="w-[7rem]"
+														value={body.color}
+														onFocus={() =>
+															setColorChange("#0")
+														}
+														onChange={(e) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].color =
+																		e.target.value;
+																	return temp;
+																}
+															);
+															setColorChange(
+																e.target.value
+															);
+															if (
+																change != null
+															) {
+																clearTimeout(
+																	change
+																);
+															}
+															change = setTimeout(
+																() => {
+																	init();
+																},
+																100
+															);
+														}}
+													/>
+												</SidebarMenuSubItem>
+
+												<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+													<label>
+														Emmission Color
+													</label>
+													<Input
+														type="color"
+														className="w-[7rem]"
+														value={
+															body.emmissionColor
+														}
+														onFocus={() =>
+															setColorChange("#0")
+														}
+														onChange={(e) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].emmissionColor =
+																		e.target.value;
+																	return temp;
+																}
+															);
+															setColorChange(
+																"ee2" +
+																	index +
+																	"" +
+																	e.target
+																		.value
+															);
+															if (
+																change != null
+															) {
+																clearTimeout(
+																	change
+																);
+															}
+															change = setTimeout(
+																() => {
+																	init();
+																},
+																100
+															);
+														}}
+													/>
+												</SidebarMenuSubItem>
+
+												<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+													<label>Trail Color</label>
+													<Input
+														type="color"
+														className="w-[7rem]"
+														value={body.trailColor}
+														onFocus={() =>
+															setColorChange("#0")
+														}
+														onChange={(e) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].trailColor =
+																		e.target.value;
+																	return temp;
+																}
+															);
+															setColorChange(
+																e.target.value
+															);
+															if (
+																change != null
+															) {
+																clearTimeout(
+																	change
+																);
+															}
+															change = setTimeout(
+																() => {
+																	init();
+																},
+																100
+															);
+														}}
+													/>
+												</SidebarMenuSubItem>
+												{/* <SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
 												<label>Forecast</label>
 												<Checkbox
 													checked={body.forecast}
@@ -1553,41 +1849,35 @@ function AppSidebar({ open }: { open: boolean }) {
 													}}
 												/>
 											</SidebarMenuSubItem> */}
-											<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
-												<label>Forecast Color</label>
-												<Input
-													type="color"
-													className="w-[7rem]"
-													value={body.forecastColor}
-													onFocus={() =>
-														setColorChange("#0")
-													}
-													onChange={(e) => {
-														setBodies((prev) => {
-															let temp = [
-																...prev,
-															];
-															temp[
-																index
-															].forecastColor =
-																e.target.value;
-															return temp;
-														});
-														setColorChange(
-															e.target.value
-														);
-													}}
-												/>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4  justify-between text-start">
-												<label>Emmission Intensity</label>
-												<div className="w-full mt-4 flex gap-1">
-													<Slider
-														defaultValue={[
-															body.emmissionIntensity,
-														]}
-														onValueChange={(e) => {
-															
+												<SidebarMenuSubItem className="w-full flex items-center justify-between text-start">
+													<label>
+														Forecast Color
+													</label>
+													<Input
+														type="color"
+														className="w-[7rem]"
+														value={
+															body.forecastColor
+														}
+														onFocus={() =>
+															setColorChange("#0")
+														}
+														onChange={(e) => {
+															setBodies(
+																(prev) => {
+																	let temp = [
+																		...prev,
+																	];
+																	temp[
+																		index
+																	].forecastColor =
+																		e.target.value;
+																	return temp;
+																}
+															);
+															setColorChange(
+																e.target.value
+															);
 															if (
 																change != null
 															) {
@@ -1597,34 +1887,73 @@ function AppSidebar({ open }: { open: boolean }) {
 															}
 															change = setTimeout(
 																() => {
-																	setBodies((prev) => {
-																		let temp = [
-																			...prev,
-																		];
-																		temp[
-																			index
-																		].emmissionIntensity =
-																			e[0];
-																		return temp;
-																	});
-																	setColorChange(
-																		"#ee3"+index+""+e[0]
-																	);
+																	init();
 																},
 																100
 															);
 														}}
-														step={0.01}
-														min={0}
-														max={10}
 													/>
-												</div>
-											</SidebarMenuSubItem>
-										</SidebarMenuSub>
-									</CollapsibleContent>
-								</SidebarMenuItem>
-							</Collapsible>
-							{separator}
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem className="w-full flex flex-col mt-2 mb-4  justify-between text-start">
+													<label>
+														Emmission Intensity
+													</label>
+													<div className="w-full mt-4 flex gap-1">
+														<Slider
+															defaultValue={[
+																body.emmissionIntensity,
+															]}
+															onValueChange={(
+																e
+															) => {
+																if (
+																	change !=
+																	null
+																) {
+																	clearTimeout(
+																		change
+																	);
+																}
+																change =
+																	setTimeout(
+																		() => {
+																			setBodies(
+																				(
+																					prev
+																				) => {
+																					let temp =
+																						[
+																							...prev,
+																						];
+																					temp[
+																						index
+																					].emmissionIntensity =
+																						e[0];
+																					return temp;
+																				}
+																			);
+																			setColorChange(
+																				"#ee3" +
+																					index +
+																					"" +
+																					e[0]
+																			);
+																			init();
+																		},
+																		100
+																	);
+															}}
+															step={1}
+															min={2}
+															max={12}
+														/>
+													</div>
+												</SidebarMenuSubItem>
+											</SidebarMenuSub>
+										</CollapsibleContent>
+									</SidebarMenuItem>
+								</Collapsible>
+								{separator}
 							</>
 						))}
 					</SidebarMenu>
@@ -1636,12 +1965,8 @@ function AppSidebar({ open }: { open: boolean }) {
 										className="w-full "
 										onClick={() => {
 											loadPreset(i);
-											findImportTime(
-												bgQ
-											);
-											setLoaded(
-												false
-											);
+											findImportTime();
+											setLoaded(false);
 										}}>
 										<label>{p.name}</label>
 									</SidebarMenuButton>

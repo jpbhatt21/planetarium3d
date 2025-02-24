@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsc -b && vite build && npm start",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "exp":"tsc -b && vite build && npm start"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.6",

@@ -1,7 +1,7 @@
 import { atom, createStore } from "jotai";
 import { theme } from "./theme";
 import { Vector3, Vector3Tuple } from "three";
-import { init } from "./simulationLoop";
+import { init, sleep } from "./simulationLoop";
 import { setBodies } from "./Three";
 import * as THREE from "three";
 //Interfaces
@@ -19,9 +19,9 @@ export interface Body {
 	forecast: boolean;
 	forecastColor: string;
 	texture: string;
-	emmissive:boolean;
-	emmissionColor:string;
-	emmissionIntensity:number;	
+	emmissive: boolean;
+	emmissionColor: string;
+	emmissionIntensity: number;
 }
 export const version = "1.1.0";
 export const planetTextures = [
@@ -98,7 +98,10 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -113,7 +116,10 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -128,7 +134,7 @@ export let preset = [
 			version: "1.1.0",
 			dt: 1,
 			G: 0.0667,
-			e:0.99,
+			e: 0.99,
 			scale: 0.5,
 			anchor: 0,
 			bodies: planetTextures.map((texture, index) => {
@@ -141,7 +147,10 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: texture.key,
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -156,7 +165,7 @@ export let preset = [
 			version: "1.1.0",
 			dt: 1,
 			G: 0.0667,
-			e:0.99,
+			e: 0.99,
 			scale: 0.5,
 			anchor: 0,
 			bodies: [
@@ -169,7 +178,10 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: !false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -184,7 +196,10 @@ export let preset = [
 					static: false,
 					fixedColor: false,
 					color: "#a3be8c",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
@@ -199,7 +214,7 @@ export let preset = [
 			version: "1.1.0",
 			dt: 1,
 			G: 0.0667,
-			e:0.99,
+			e: 0.99,
 			scale: 1,
 			anchor: 0,
 			bodies: [
@@ -212,7 +227,10 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -227,7 +245,10 @@ export let preset = [
 					static: false,
 					fixedColor: false,
 					color: "#a3be8c",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
@@ -240,22 +261,24 @@ export let preset = [
 		name: "Planetary System",
 		data: {
 			version: "1.1.0",
-			dt: 1,
-			G: 0.0667,
-			e:0.99,
-			scale: 0.1,
+			dt: 75.75,
+			G: 0.00000154,
+			e: 0.036,
 			anchor: 3,
 			bodies: [
 				{
 					name: "sun",
-					mass: 3330000,
-					radius: 500,
+					mass: 33300000,
+					radius: 1090,
 					position: [0, 0, 0],
 					velocity: [0, 0, 0],
 					static: true,
 					fixedColor: true,
 					color: "#d3a645",
-					trail: true, emmissionIntensity:3, emmissive:true, emmissionColor:"#d3a645",
+					trail: true,
+					emmissionIntensity: 3,
+					emmissive: true,
+					emmissionColor: "#d3a645",
 					texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -263,14 +286,17 @@ export let preset = [
 				},
 				{
 					name: "mercury",
-					mass: 1,
-					radius: 20,
-					position: [0, 0,554],
-					velocity: [20, 0, 0],
+					mass: 5.5,
+					radius: 3.83,
+					position: [0, 0, 9092],
+					velocity: [0.0737, 0, 0],
 					static: false,
 					fixedColor: true,
 					color: "#a6943a",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "gs",
 					trailColor: "#2e3440",
 					forecast: true,
@@ -278,14 +304,17 @@ export let preset = [
 				},
 				{
 					name: "venus",
-					mass: 8,
-					radius: 57,
-					position: [0,0, 1074],
-					velocity: [15, 0, 0],
+					mass: 81.5,
+					radius: 9.49,
+					position: [0, 0, 16985],
+					velocity: [0.0549, 0, 0],
 					static: false,
 					fixedColor: true,
 					color: "#ebcb8b",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "conw",
 					trailColor: "#3b4252",
 					forecast: true,
@@ -293,29 +322,53 @@ export let preset = [
 				},
 				{
 					name: "earth",
-					mass: 10,
-					radius: 60,
-					position: [0, 0, 1478],
-					velocity: [13, 0, 0],
+					mass: 100,
+					radius: 10,
+					position: [0, 0, 23480],
+					velocity: [0.0467, 0, 0],
 					static: false,
 					fixedColor: true,
 					color: "#629bd0",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "earth",
 					trailColor: "#434c5e",
 					forecast: true,
 					forecastColor: "#8d9cbf",
 				},
 				{
+					name: "moon",
+					mass: 1.23,
+					radius: 2.72,
+					position: [0, 0, 23540.26],
+					velocity: [0.0467, 0.0014, 0.00015],
+					static: false,
+					fixedColor: true,
+					color: "#629bd0",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
+					texture: "hcf",
+					trailColor: "#434c5e",
+					forecast: true,
+					forecastColor: "#8d9cbf",
+				},
+				{
 					name: "mars",
-					mass: 1,
-					radius: 32,
-					position: [0, 0, 2280],
-					velocity: [10.5, 0, 0],
+					mass: 10.7,
+					radius: 5,
+					position: [0, 0, 35772],
+					velocity: [0.0376, 0, 0],
 					static: false,
 					fixedColor: true,
 					color: "#e05252",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "crg",
 					trailColor: "#4c566a",
 					forecast: true,
@@ -323,14 +376,17 @@ export let preset = [
 				},
 				{
 					name: "jupiter",
-					mass: 3180,
-					radius: 150,
-					position: [0, 0, 7624],
-					velocity: [5.5, 0, 0],
+					mass: 317800,
+					radius: 110,
+					position: [0, 0, 122223],
+					velocity: [0.0205, 0, 0],
 					static: false,
 					fixedColor: true,
 					color: "#dfd1b3",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "gf",
 					trailColor: "#434c5e",
 					forecast: true,
@@ -345,7 +401,7 @@ export let preset = [
 			version: "1.1.0",
 			dt: 1,
 			G: 0.0667,
-			e:0.99,
+			e: 0.99,
 			scale: 0.5,
 			anchor: 0,
 			bodies: [
@@ -358,7 +414,10 @@ export let preset = [
 					static: true,
 					fixedColor: true,
 					color: "#5e81ac",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#8fbcbb",
 					forecast: true,
@@ -373,7 +432,10 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#bf616a",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#2e3440",
 					forecast: true,
@@ -388,7 +450,10 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#d08770",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#3b4252",
 					forecast: true,
@@ -403,7 +468,10 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#ebcb8b",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#434c5e",
 					forecast: true,
@@ -418,7 +486,10 @@ export let preset = [
 					static: false,
 					fixedColor: true,
 					color: "#a3be8c",
-					trail: true, emmissionIntensity:1, emmissive:false, emmissionColor:"#b2b2b2",
+					trail: true,
+					emmissionIntensity: 4,
+					emmissive: false,
+					emmissionColor: "#b2b2b2",
 					texture: "hcf",
 					trailColor: "#4c566a",
 					forecast: true,
@@ -482,9 +553,31 @@ export const textureSizes = [
 	},
 ];
 let previouslyLoaded = [] as string[];
-export function findImportTime(qual:number) {
+function measureSpeed() {
+	let init2: any = new Date().getTime();
+	fetch("/files/1mb.txt", {
+		cache: "no-store",
+	}).then(() => {
+		let now = new Date().getTime();
+		let diff = (now - init2) / 1000;
+		let speed = 1 / diff;
+		console.log(speed);
+		con.log("Est. Conn. ", speed.toFixed(2), " MB/s");
+		store.set(speedAtom, speed);
+	});
+}
+export async function findImportTime(
+	qual: number = store.get(settingsAtom).textureQuality
+) {
+	measureSpeed();
+	let speed = store.get(speedAtom);
+	if (speed < 0) {
+		await sleep(100);
+		speed = store.get(speedAtom);
+	}
 	let size = 0;
-	let bg = store.get(settingsAtom).background as keyof (typeof textureSizes)[0];
+	let bg = store.get(settingsAtom)
+		.background as keyof (typeof textureSizes)[0];
 	let textures = store
 		.get(bodiesAtom)
 		.map((body) => body.texture as keyof (typeof textureSizes)[0]);
@@ -501,47 +594,53 @@ export function findImportTime(qual:number) {
 			previouslyLoaded.push(texture + qual);
 		}
 	});
-	con.log("Fetch Size: ", size.toFixed(2), " MB");
-	store.set(timeAtom, Math.round((size * 8) / store.get(speedAtom)))
-	return Math.round((size * 8) / store.get(speedAtom));
+	con.log("Texture Size ", size.toFixed(2), "MB");
+	let time = size / speed;
+	store.set(timeAtom, Math.round(time));
+	con.log("Est. Load ", time.toFixed(2), "s");
 }
 //Atoms
 export const settingsAtom = atom({
-	timeStep:1,
-	gravitationalConstant:6.6743e-2,
-	elasticitiy:0.8,
-	forecastLimit:10000,
-	trailLimit:10000,
-	background:"q",
-	textureQuality:1,
-	bloom:true,
-	bloomIntensity:0.3,
-	ambientLight:true,
-	ambientLightIntensity:4,
-	emmissiveLightMultiplier:10,
-	emmissiveLightDecay:0.1,
-
-})
+	timeStep: 1,
+	gravitationalConstant: 6.6743e-2,
+	elasticitiy: 0.8,
+	forecastLimit: 10000,
+	trailLimit: 10000,
+	background: "q",
+	textureQuality: 0,
+	bloom: true,
+	bloomIntensity: 0.3,
+	ambientLight: true,
+	ambientLightIntensity: 4,
+	emmissiveLightMultiplier: 10,
+	emmissiveLightDecay: 0.1,
+	preset: 4,
+});
 export const consoleText = atom(["|||Welcome to Planetarium!"]);
-let prevLine={
-	content:"Welcome to Planetarium!",
-	count:1
-}
-export const con={
-	log:(...text:any)=>{
-		text = text.join("")
+let prevLine = {
+	content: "Welcome to Planetarium!",
+	count: 1,
+};
+export const con = {
+	log: (...text: any) => {
+		text = text.join("");
 		let conText = store.get(consoleText);
-		if(prevLine.content==text){
-			prevLine.count++
-			conText[conText.length-1]=new Date().toLocaleTimeString()+"|||" +prevLine.content+" ("+prevLine.count+")"
+		if (prevLine.content == text) {
+			prevLine.count++;
+			conText[conText.length - 1] =
+				new Date().toLocaleTimeString() +
+				"|||" +
+				prevLine.content +
+				" (" +
+				prevLine.count +
+				")";
+		} else {
+			prevLine = { content: text, count: 1 };
+			conText.push(new Date().toLocaleTimeString() + "|||" + text);
 		}
-		else{
-			prevLine={content:text,count:1}
-			conText.push(new Date().toLocaleTimeString()+"|||"+text)
-		}
-		store.set(consoleText,conText)
-	}
-}
+		store.set(consoleText, conText);
+	},
+};
 export const playingAtom = atom(false);
 export const store = createStore();
 export const bodiesAtom = atom([] as Body[]);
@@ -549,11 +648,7 @@ export const focusAtom = atom(0);
 export const trailsAtom = atom([] as Vector3Tuple[][]);
 export const forecastBodyStateAtom = atom([] as Body[][]);
 export const forecastPositionAtom = atom([] as Vector3Tuple[][]);
-export const animationKeyAtom = atom(-1);
 export const bodyRefAtom = atom({ current: [] } as React.MutableRefObject<any>);
-export const radiusRefAtom = atom({
-	current: [],
-} as React.MutableRefObject<any>);
 export const trailRefAtom = atom({
 	current: [],
 } as React.MutableRefObject<any>);
@@ -562,9 +657,9 @@ export const forecastRefAtom = atom({
 } as React.MutableRefObject<any>);
 export const colorChangerAtom = atom("#-1");
 export const bgLoadedAtom = atom(false);
-export const speedAtom = atom(1);
+export const speedAtom = atom(-1);
 export const timeAtom = atom(-1);
-//Functions
+
 export function makeDefaultBody(props: object = {}): Body {
 	return {
 		name: "Body" + store.get(bodiesAtom).length,
@@ -575,9 +670,10 @@ export function makeDefaultBody(props: object = {}): Body {
 		static: false,
 		fixedColor: false,
 		color: Object.values(theme.nord.aurora)[Math.floor(Math.random() * 5)],
-		trail: true, emmissionIntensity:1,
-		emmissive:false,
-		emmissionColor:"#b2b2b2",
+		trail: true,
+		emmissionIntensity: 4,
+		emmissive: false,
+		emmissionColor: "#b2b2b2",
 		trailColor: Object.values(theme.nord.dark)[
 			Math.floor(Math.random() * 4)
 		],
@@ -589,10 +685,8 @@ export function makeDefaultBody(props: object = {}): Body {
 		...props,
 	};
 }
-export async function loadPreset(index: number,data:any=null) {
+export async function loadPreset(index: number, data: any = null) {
 	store.set(playingAtom, false);
-	window.cancelAnimationFrame(store.get(animationKeyAtom));
-	store.set(animationKeyAtom, -1);
 	let trailRefs = store.get(trailRefAtom);
 	let forecastRefs = store.get(forecastRefAtom);
 
@@ -618,28 +712,64 @@ export async function loadPreset(index: number,data:any=null) {
 	store.set(forecastRefAtom, { current: [] });
 	store.set(forecastBodyStateAtom, []);
 	store.set(trailsAtom, []);
-	let select=preset[0].data
-	if(data){
-		select=data
-	}
-	else{
-		select=preset[index].data
+	let select = preset[0].data;
+	if (data) {
+		select = data;
+	} else {
+		select = preset[index].data;
 	}
 	store.set(bodiesAtom, select.bodies as Body[]);
 	setBodies(select.bodies as Body[]);
-	store.set(settingsAtom,(prev)=>({...prev,timeStep:select.dt,gravitationalConstant:select.G,elasticitiy:select.e}))
-	store.set(focusAtom,select.anchor)
+	store.set(settingsAtom, (prev) => ({
+		...prev,
+		timeStep: select.dt,
+		gravitationalConstant: select.G,
+		elasticitiy: select.e,
+	}));
+	store.set(focusAtom, select.anchor);
 	init(false, true);
 	store.set(colorChangerAtom, "#preset" + index);
 }
+export function addNewBody(body: Body) {
+	let bodies = store.get(bodiesAtom);
+	store.set(playingAtom, false);
+	let trailRefs = store.get(trailRefAtom);
+	let forecastRefs = store.get(forecastRefAtom);
 
+	for (let index = 0; index < store.get(bodiesAtom).length; index++) {
+		if (trailRefs.current[index]) {
+			trailRefs.current[index].geometry.dispose();
+			trailRefs.current[index].geometry =
+				new THREE.BufferGeometry().setFromPoints([
+					new Vector3(0, 0, 0),
+				]);
+		}
+
+		if (forecastRefs.current[index]) {
+			forecastRefs.current[index].geometry.dispose();
+			forecastRefs.current[index].geometry =
+				new THREE.BufferGeometry().setFromPoints([
+					new Vector3(0, 0, 0),
+				]);
+		}
+	}
+	store.set(trailRefAtom, { current: [] });
+	store.set(bodyRefAtom, { current: [] });
+	store.set(forecastRefAtom, { current: [] });
+	store.set(forecastBodyStateAtom, []);
+	store.set(trailsAtom, []);
+	bodies.push(body);
+	store.set(bodiesAtom, bodies);
+	setBodies(bodies);
+	init(false, true);
+}
 function main() {
-	loadPreset(4)
+	loadPreset(store.get(settingsAtom).preset);
 
 	init();
-	store.set(colorChangerAtom, "#preset" + 4);
+	// store.set(colorChangerAtom, "#preset" + 0);
 
 	return;
 }
-
+findImportTime();
 main();

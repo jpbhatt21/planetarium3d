@@ -13,25 +13,12 @@ import {
 	bgLoadedAtom,
 	con,
 	consoleText,
-	findImportTime,
 	settingsAtom,
-	speedAtom,
-	store,
 	timeAtom,
 } from "./atoms";
 import { Textarea } from "./components/ui/textarea";
 let init: any = new Date().getTime();
-let init2: any = new Date().getTime();
-fetch("/files/1mb.txt",{
-	cache: "no-store"
-}).then(() => {
-	let now = new Date().getTime();
-	let diff = now - init2;
-	let speed = 1 / (diff / 1024);
-	store.set(speedAtom, speed);
-	con.log("Connection Speed: ", (speed/8).toFixed(2), "  MB/s (est.)");
-	con.log("Load Time: ", (findImportTime(1)*1000).toFixed(0), " ms (est.)");
-});
+
 const isWebGLAvailable = WebGL.isWebGL2Available();
 let loaderInterval: any = null;
 function App() {
@@ -66,7 +53,7 @@ function App() {
 	const bg = settings.background
 	const bgQ = settings.textureQuality
 	const [time] = useAtom(timeAtom);
-	const [showConsole, setShowConsole] = useState(false);
+	const [showConsole, setShowConsole] = useState(!false);
 	useEffect(()=>{
 		if(cons.current){
 			cons.current.scrollTop = cons.current.scrollHeight
@@ -79,7 +66,7 @@ function App() {
 		if (loaded) {
 			let now = new Date().getTime();
 			let diff = now - init;
-			con.log("Loading took ", diff, " ms");
+			con.log("Loading took ", (diff/1000).toFixed(2), "s");
 			clearInterval(loaderInterval);
 			if (loader.current) loader.current.style.width = "100%";
 		} else {
@@ -128,6 +115,8 @@ function App() {
 					<AppSidebar open={open} />
 					<div className="fixed duration -300 w-full h-full top-0 ">
 						<Canvas
+						shadows
+						
 							camera={{ far: 100000000, near: 0.1, fov: 75 }}
 							className="w-full h-full "
 							style={{
