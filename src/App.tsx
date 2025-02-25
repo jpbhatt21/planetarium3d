@@ -13,6 +13,7 @@ import {
 	bgLoadedAtom,
 	con,
 	consoleText,
+	playingAtom,
 	settingsAtom,
 	timeAtom,
 } from "./atoms";
@@ -53,7 +54,8 @@ function App() {
 	const bg = settings.background
 	const bgQ = settings.textureQuality
 	const [time] = useAtom(timeAtom);
-	const [showConsole, setShowConsole] = useState(!false);
+	const [showConsole, setShowConsole] = useState(false);
+	const [_, setPlaying] = useAtom(playingAtom);
 	useEffect(()=>{
 		if(cons.current){
 			cons.current.scrollTop = cons.current.scrollHeight
@@ -181,7 +183,11 @@ function App() {
 					style={{
 						opacity: showConsole ? 1 : 0,
 						pointerEvents: showConsole ? "all" : "none",
-						transition: "opacity 0.3s"
+						transition: "opacity 0.3s",
+
+					}}
+					onClick={()=>{
+						setShowConsole((prev) => !prev);
 					}}
 					>
 						
@@ -200,6 +206,23 @@ function App() {
 						}
 
 					</div>
+					<div className="fixed bottom-2 right-2 z-20 h-2 bg-foreground w-2"  
+					style={{
+						opacity: !showConsole ? 1 : 0,
+						pointerEvents: !showConsole ? "all" : "none",
+						transition: "opacity 0.3s",
+					}}
+					onClick={()=>{
+						setShowConsole((prev)=>!prev)
+					}}
+					/>
+					<div className="fixed top-2 right-2 z-20 h-2 bg-foreground w-2"  
+					
+					onClick={()=>{
+						setPlaying((prev)=>!prev)
+					}}
+					/>
+						
 				</SidebarProvider>
 			</div>
 		</>
