@@ -1,50 +1,57 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![logo](./public/logo.png)](https://p3d.jpbhatt.tech/)    
 
-Currently, two official plugins are available:
+### Planetarium 3D is an interactive simulator that models the gravitational dynamics of celestial bodies in a fully 3D environment, enabling real-time visualization and analysis of orbits.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+#### Try planetarium3d [here](https://p3d.jpbhatt.tech/).
 
-## Expanding the ESLint configuration
+## Features
+- Real-time N-body gravitational simulation  
+- Customizable initial conditions (mass,radius, position, velocity)  
+- Interactive camera controls (zoom, pan, rotate)  
+- Orbital trails and forecast
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Technologies
+- react-three/drei for 3D rendering 
+- Jotai for state management
+- Tailwind CSS for styling
 
-- Configure the top-level `parserOptions` property like this:
+## Installation
+1. Clone the repo:  
+   ```bash
+   git clone https://github.com//planetarium-3d.git
+   cd planetarium-3d
+   ```
+2. Install dependencies:  
+   ```bash
+   npm isnstall
+   ```
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Usage
+```bash
+npm run dev
 ```
+Use the GUI to set simulation parameters, then press **Space** to launch the simulation.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Configuration
+Edit Universal Variables to adjust:  
+- `Time Step`: simulation delta-t  
+- `Gravitational Constant`: simulation G
+- `Elastic Constant`: simulation k
+- `Forecast Limit` : number of steps to forecast
+- `Trail Limit`: number of steps to show in the trail
+- `Anchor` : anchor body for the camera
+- `Background`: background texture for skybox
+- `Texture Quality`: quality of the background texture
+- `Ambient Light & Intensity` : ambient light settings
+- `Bloom & Intensity` : bloom settings
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+Export & Import simulation settings via JSON files.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Examples of Use
+- **Solar System Demo**: Preloaded Sun, Earth, Mars, Jupiter  
+- **Custom Scenarios**: Create your own scenarios by adding celestial bodies with custom mass, radius, position, and velocity.
+
+## License
+Distributed under the MIT License.
+
