@@ -19,12 +19,12 @@
 ## Installation
 1. Clone the repo:  
    ```bash
-   git clone https://github.com//planetarium-3d.git
-   cd planetarium-3d
+   git clone https://github.com/jpbhatt21/planetarium3d.git
+   cd planetarium3d
    ```
 2. Install dependencies:  
    ```bash
-   npm isnstall
+   npm install
    ```
 
 ## Usage
