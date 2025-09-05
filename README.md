@@ -1,9 +1,9 @@
 
-[![logo](./public/logo.png)](https://p3d.jpbhatt.tech/)    
+[![logo](./public/logo.png)](https://p3d.bhatt.jp/)    
 
 ### Planetarium 3D is an interactive simulator that models the gravitational dynamics of celestial bodies in a fully 3D environment, enabling real-time visualization and analysis of orbits.
 
-#### Try planetarium3d [here](https://p3d.jpbhatt.tech/).
+#### Try planetarium3d [here](https://p3d.bhatt.jp/).
 
 ## Features
 - Real-time N-body gravitational simulation  
