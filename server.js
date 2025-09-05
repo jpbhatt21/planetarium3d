@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Proxy API requests
 
 app.use('/files', createProxyMiddleware({
-    target: 'https://cdn.jpbhatt.tech',
+    target: 'https://cdn.bhatt.jp',
     changeOrigin: true,
     pathRewrite: {'/files':"/" },
   
